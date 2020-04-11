@@ -8,14 +8,19 @@ module Bluzelle
             # @param options [Hash]
             # @return [Bluzelle::Swarm::Client]
             def initialize(options = {})
-                raise ArgumentError.new('Address must be a string') unless options[:address].is_a?(String)
-                raise ArgumentError.new('Mnemonic must be a string') unless options[:mnemonic].is_a?(String)
+                validate_string(options[:address], 'Address must be a string.')
+                validate_string(options[:mnemonic], 'Mnemonic must be a string.')
                 
                 @address = options[:address]
                 @mnemonic = options[:mnemonic]
                 @uuid = options[:uuid] || @address
                 @chain_id = options[:chain_id] || 'bluzelle'
                 @endpoint = options[:endpoint] || 'http://localhost:1317'
+            end
+
+            private
+            def validate_string(arg, msg)
+                raise ArgumentError.new(msg) unless arg.is_a?(String)
             end
         end
     end
