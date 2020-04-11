@@ -8,9 +8,8 @@ module Bluzelle
             # @param options [Hash]
             # @return [Bluzelle::Swarm::Client]
             def initialize(options = {})
-                if options[:address].nil? || options[:mnemonic].nil?
-                    raise ArgumentError
-                end
+                raise ArgumentError.new('Address must be a string') unless options[:address].is_a?(String)
+                raise ArgumentError.new('Mnemonic must be a string') unless options[:mnemonic].is_a?(String)
                 
                 @address = options[:address]
                 @mnemonic = options[:mnemonic]

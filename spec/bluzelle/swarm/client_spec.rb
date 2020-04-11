@@ -39,5 +39,33 @@ RSpec.describe Bluzelle::Swarm::Client do
                 uuid: client.uuid
             )}.to raise_error(ArgumentError)
         end
+
+        it 'fails when address is not a string' do
+            non_string_types = [{}, 1]
+
+            non_string_types.each do |type|
+                expect{ Bluzelle::Swarm::Client.new(
+                    address: type,
+                    mnemonic: client.mnemonic,
+                    endpoint: client.endpoint,
+                    chain_id: client.chain_id,
+                    uuid: client.uuid
+                )}.to raise_error(ArgumentError)
+            end
+        end
+
+        it 'fails when mnemonic throws error' do
+            non_string_types = [{}, 1]
+
+            non_string_types.each do |type|
+                expect{ Bluzelle::Swarm::Client.new(
+                    address: client.address,
+                    mnemonic: type,
+                    endpoint: client.endpoint,
+                    chain_id: client.chain_id,
+                    uuid: client.uuid
+                )}.to raise_error(ArgumentError)
+            end
+        end
     end
 end
