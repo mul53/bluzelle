@@ -68,4 +68,26 @@ RSpec.describe Bluzelle::Swarm::Client do
             end
         end
     end
+
+    describe '#create' do
+        it 'should throw error when key is not string' do
+            non_string_types = [{}, 1, []]
+
+            non_string_types.each do |key|
+                expect{ 
+                   client.create(key, '{a: 13}')
+                }.to raise_error(ArgumentError)
+            end
+        end
+
+        it 'should throw error when value is not string' do
+            non_string_types = [{}, 1, []]
+
+            non_string_types.each do |value|
+                expect{ 
+                   client.create('myKey', value)
+                }.to raise_error(ArgumentError)
+            end
+        end
+    end
 end

@@ -18,6 +18,11 @@ module Bluzelle
                 @endpoint = options[:endpoint] || 'http://localhost:1317'
             end
 
+            def create(key, value, gas_info = nil)
+                validate_string(key, 'Key must be a string.')
+                validate_string(value, 'Value must be a string.')
+            end
+
             private
             def validate_string(arg, msg)
                 raise ArgumentError.new(msg) unless arg.is_a?(String)
