@@ -12,7 +12,7 @@ module Bluzelle
         module_function
 
         def get_ec_private_key(mnemonic)
-            seed = seed_from_mnemonic(mnemonic)
+            seed = bip39_mnemonic_to_seed(mnemonic)
             node = bip32_from_seed(seed)
             child = node.node_for_path(PATH)
             ec_pair = create_ec_pair(child.private_key.to_hex)
@@ -57,7 +57,7 @@ module Bluzelle
             Bitcoin::Bech32.convert_bits(bytes, from_bits: from_bits, to_bits: to_bits, pad: pad)
         end
 
-        def seed_from_mnemonic(mnemonic)
+        def bip39_mnemonic_to_seed(mnemonic)
             BipMnemonic.to_seed(mnemonic: mnemonic)
         end
 
