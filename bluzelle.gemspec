@@ -26,4 +26,9 @@ Gem::Specification.new do |spec|
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
+
+  spec.add_dependency 'bitcoin-ruby'
+  spec.add_dependency 'money-tree'
+  spec.add_dependency 'bip_mnemonic'
+  spec.add_dependency 'openssl'
 end

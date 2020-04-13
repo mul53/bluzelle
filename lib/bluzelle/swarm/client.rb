@@ -27,6 +27,19 @@ module Bluzelle
             def validate_string(arg, msg)
                 raise ArgumentError.new(msg) unless arg.is_a?(String)
             end
+
+            def build_params(key, value)
+                {
+                    BaseReq: {
+                        from: @address,
+                        chain_id: @chain_id
+                    },
+                    UUID: @uuid,
+                    Key: key,
+                    Value: value,
+                    Owner: @address
+                }
+            end
         end
     end
 end
