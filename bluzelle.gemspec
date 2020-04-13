@@ -31,4 +31,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'money-tree'
   spec.add_dependency 'bip_mnemonic'
   spec.add_dependency 'openssl'
+  spec.add_dependency 'rest-client'
 end
