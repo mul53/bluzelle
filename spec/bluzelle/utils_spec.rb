@@ -24,4 +24,32 @@ RSpec.describe Bluzelle::Utils do
             ).to eq('bluzelle1xhz23a58mku7ch3hx8f9hrx6he6gyujq57y3kp')
         end
     end
+
+    describe '#make_random_string' do
+        it 'should return random string when given length' do
+            str1 = subject.make_random_string(5)
+            str2 = subject.make_random_string(5)
+            
+            expect(str1).not_to eq(str2)
+        end
+    end
+
+    describe '#sign_transaction' do
+        it 'should sign transaction data and return obj' do
+            expect(subject.sign_transaction('f02e2c689c06fa26587592b2232275da63b72a369330d89ae1ff6918afc1a2ab',
+                { 
+                    'value': {
+                        'fee': '',
+                        'memo': '72a369330d89ae1ff6918',
+                        'msg': '',
+                        'account_info': {
+                            'account_number': '123',
+                            'sequence': '1'
+                        }
+                    } 
+                },
+                10)
+            ).not_to be_nil
+        end
+    end
 end

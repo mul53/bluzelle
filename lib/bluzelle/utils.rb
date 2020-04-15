@@ -3,11 +3,14 @@ require 'bitcoin'
 require 'money-tree'
 require 'digest'
 require 'openssl'
+require 'base64'
 
 module Bluzelle
     module Utils
         PREFIX = 'bluzelle'
         PATH = "m/44'/118'/0'/0/0"
+        TOKEN_NAME = 'ubnt'
+        TX_COMMAND = 'txs'
 
         module_function
 
@@ -83,6 +86,51 @@ module Bluzelle
 
         def create_ec_pair(private_key)
             Bitcoin::Key.new(private_key, nil, { compressed: false })
+        end
+
+        def make_random_string(length = 32)
+            random_string = ''
+            chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.chars
+
+            0.upto(length) { random_string << chars.sample }
+                
+            random_string
+        end
+
+        def to_base64(str)
+            Base64.encode64(str)
+        end
+
+        def sanitize_str(str)
+        end
+
+        def sign_transaction(key, data, chain_id)
+            key_pair = open_key(key)
+
+            payload = {
+                account_number: data.dig(:value, :account_info, :account_number) || '0',
+                chain_id: chain_id,
+                fee: data.dig(:value, :fee),
+                memo: data.dig(:value, :memo),
+                msgs: data.dig(:value, :msg),
+                sequence: data.dig(:value, :account_info, :sequence) || '0'
+            }
+
+            jstr = JSON.generate(payload)
+            hash = sha_256_digest(jstr)
+            signature = to_base64(key_pair.dsa_sign_asn1(hash))
+
+            {
+                pub_key: {
+                    type: 'tendermint/PubKeySecp256k1',
+                    value: to_base64(
+                        [compressed_pub_key(open_key(key))].pack('H*')
+                    ) 
+                },
+                signature: signature,
+                account_number: data.dig(:value, :account_info, :account_number),
+                sequence: data.dig(:value, :account_info, :sequence)
+            }
         end
     end
 end
