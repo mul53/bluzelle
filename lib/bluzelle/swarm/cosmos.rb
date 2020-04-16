@@ -52,19 +52,12 @@ module Bluzelle
                 url = "#{@endpoint}/#{tx.endpoint}"
                 chain_id = tx.data.dig('BaseReq', 'chain_id')
 
-                request = {
-                    method: tx.method,
-                    url: url,
-                    data: tx.data,
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-                }
-
                 data = nil
 
                 begin
-                    r = RestClient::Request.execute(method: request[:method], 
-                      url: request[:url], payload: request[:data],
-                        headers: request[:headers]
+                    r = RestClient::Request.execute(method: tx.method, 
+                      url: url, payload: tx.data,
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                     )
                 rescue => exception
                     advance_queue
