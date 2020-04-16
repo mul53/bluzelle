@@ -159,7 +159,7 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
 
     describe '#broadcast_transaction' do
         before do
-            get_account_request
+            @account_request_stub = get_account_request
             get_skeleton_request(JSON.generate(tx_create_skeleton))
         end
 
@@ -193,6 +193,23 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
             expect{
                 cosmos.broadcast_transaction(tx)
             }.to raise_error 'Invalid chain id'
+        end
+
+        it 'should retry request 10 times' do
+            stub_request(:post, "http://localhost:1317/txs").
+                with(
+                    body: hash_including({"type"=>"cosmos-sdk/StdTx"}),
+                ).
+                to_return(status: 200, body: JSON.generate({ code: 4, raw_log: 'signature verification failed' }), headers: {})
+
+
+            tx = Bluzelle::Swarm::Transaction.new('post', 'crud/create', data)
+            tx.set_gas(gas_params)
+
+            expect{
+                cosmos.broadcast_transaction(tx)
+            }.to raise_error 'Invalid chain id'
+            expect(@account_request_stub).to have_been_made.times(11) 
         end
     end
 

@@ -23,10 +23,13 @@ module Bluzelle
                 r = RestClient.get("#{@endpoint}/auth/accounts/#{@address}")
                 data = JSON.parse(r.body).dig('result', 'value')
 
-                @account_info[:account_number] = data.dig('result', 'value', 'account_number')
+                account_number = data.dig('result', 'value', 'account_number')
+                sequence = data.dig('result', 'value', 'sequence')
+
+                @account_info[:account_number] = account_number
                 
-                if @account_info[:sequence] != data.dig('result', 'value', 'sequence')
-                    @account_info[:sequence] = data.dig('result', 'value', 'sequence')
+                if @account_info[:sequence] != sequence
+                    @account_info[:sequence] = sequence
                     return true
                 end
 
@@ -42,9 +45,7 @@ module Bluzelle
             end
 
             def next_transaction
-                unless @queue.empty?
-                    broadcast_transaction(@queue.front)
-                end
+                broadcast_transaction(@queue.front)
             end
 
             def send_initial_transaction(tx)
@@ -66,7 +67,7 @@ module Bluzelle
                         headers: request[:headers]
                     )
                 rescue => exception
-                    @queue.dequeue
+                    advance_queue
                     puts exception
                 else
                     data = JSON.parse(r.body)
@@ -115,7 +116,7 @@ module Bluzelle
                 begin
                     r = RestClient.post("#{@endpoint}/#{Utils::TX_COMMAND}", data)
                 rescue => exception
-                    @queue.dequeue
+                    advance_queue
                     puts exception
                 else
                     res = JSON.parse(r.body)
@@ -123,19 +124,27 @@ module Bluzelle
 
                 if res['code'].nil?
                     @account_info['sequence'] = (@account_info['sequence'].to_i) + 1;
-                    @queue.dequeue
+                    advance_queue
                     return res
                 else
                     if res['raw_log'].include?('signature verification failed')
                         update_account_sequence(tx)
                     else
-                        @queue.dequeue
+                        advance_queue
                     end 
                 end
             end
 
+            def advance_queue
+                @queue.dequeue
+
+                next_transaction unless @queue.isEmpty?
+            end
+
             def update_account_sequence(tx)
                 if tx.retries_left != 0
+                    sleep Utils::BROADCAST_RETRY_SECONDS
+
                     changed = send_account_query
 
                     if changed
@@ -145,7 +154,7 @@ module Bluzelle
                         update_account_sequence(tx) 
                     end
                 else
-                    @queue.dequeue
+                    advance_queue
                     raise 'Invalid chain id'
                 end
             end
