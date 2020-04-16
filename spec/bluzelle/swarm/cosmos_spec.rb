@@ -192,7 +192,7 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
 
             expect{
                 cosmos.broadcast_transaction(tx)
-            }.to raise_error 'Invalid chain id'
+            }.to raise_error Bluzelle::Error::ApiError
         end
 
         it 'should retry request 10 times' do
@@ -208,7 +208,7 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
 
             expect{
                 cosmos.broadcast_transaction(tx)
-            }.to raise_error 'Invalid chain id'
+            }.to raise_error Bluzelle::Error::ApiError
             expect(@account_request_stub).to have_been_made.times(11) 
         end
     end

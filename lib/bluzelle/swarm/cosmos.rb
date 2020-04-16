@@ -11,7 +11,6 @@ module Bluzelle
                 @mnemonic = options[:mnemonic]
                 @endpoint = options[:endpoint]
                 @address = options[:address]
-                @queue = TransactionQueue.new
                 @account_info = {}
 
                 Utils.validate_address(@address, @mnemonic)
@@ -46,7 +45,7 @@ module Bluzelle
                     elsif res.dig('error', 'message').is_a?(String)
                         raise Error::ApiError.new(res.dig('error', 'message'), err.http_code)
                     else
-                        raise 'error occurred'
+                        raise Error::ApiError.new('error occurred', err.http_code)
                     end
                 else
                     return JSON.parse(r.body)
@@ -56,13 +55,7 @@ module Bluzelle
             def send_transaction(method, endpoint, data, gas_info)
                 tx = Transaction.new(method, endpoint, data)
                 tx.set_gas(gas_info)
-                @queue.enqueue(tx)
-
-                next_transaction
-            end
-
-            def next_transaction
-                broadcast_transaction(@queue.front)
+                broadcast_transaction(tx)
             end
 
             def send_initial_transaction(tx)
@@ -76,9 +69,8 @@ module Bluzelle
                       url: url, payload: tx.data,
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                     )
-                rescue => exception
-                    advance_queue
-                    puts exception
+                rescue RestClient::ExceptionWithResponse => err
+                    raise Error:ApiError.new('error occurred', err.http_code)
                 else
                     data = JSON.parse(r.body)
 
@@ -115,8 +107,7 @@ module Bluzelle
                 data['value']['signatures'] = []
                 data['value']['memo'] = Utils.make_random_string
 
-                sig = Utils.sign_transaction(
-                        Utils.get_ec_private_key(@mnemonic), data, chain_id)
+                sig = Utils.sign_transaction(Utils.get_ec_private_key(@mnemonic), data, chain_id)
 
                 data['value']['signatures'] << sig
                 data['value']['signature'] = sig
@@ -125,30 +116,22 @@ module Bluzelle
 
                 begin
                     r = RestClient.post("#{@endpoint}/#{Utils::TX_COMMAND}", data)
-                rescue => exception
-                    advance_queue
-                    puts exception
+                rescue RestClient::ExceptionWithResponse => err
+                    raise Error::ApiError.new(err.message)
                 else
                     res = JSON.parse(r.body)
                 end
 
                 if res['code'].nil?
                     @account_info['sequence'] = (@account_info['sequence'].to_i) + 1;
-                    advance_queue
                     return res
                 else
                     if res['raw_log'].include?('signature verification failed')
                         update_account_sequence(tx)
                     else
-                        advance_queue
+                        raise Error::ApiError.new(res['raw_log'])
                     end 
                 end
-            end
-
-            def advance_queue
-                @queue.dequeue
-
-                next_transaction unless @queue.isEmpty?
             end
 
             def update_account_sequence(tx)
@@ -164,8 +147,7 @@ module Bluzelle
                         update_account_sequence(tx) 
                     end
                 else
-                    advance_queue
-                    raise 'Invalid chain id'
+                    raise Error::ApiError.new('Invalid chain id')
                 end
             end
         end
