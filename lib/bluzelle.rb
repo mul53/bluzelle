@@ -1,3 +1,4 @@
+require "bluzelle/error"
 require "bluzelle/swarm/transaction"
 require "bluzelle/swarm/transaction_queue"
 require "bluzelle/swarm/cosmos"

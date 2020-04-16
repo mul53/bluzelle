@@ -213,6 +213,42 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
         end
     end
 
+    describe '#query' do
+        before do
+            get_account_request
+        end
+
+        it 'should do basic query' do
+            stub_request(:get, "http://localhost:1317/test")
+                .to_return(status: 200, body: JSON.generate(response_data), headers: {})
+
+            res = cosmos.query('test')
+            
+            expect(res).not_to be_nil
+        end
+
+        it '404 query' do
+            stub_request(:get, "http://localhost:1317/test")
+                .to_return(status: 404, body: 'not found', headers: {})
+
+            expect{cosmos.query('test')}.to raise_error Bluzelle::Error::ApiError
+        end
+
+        it 'should handle key not found query' do
+            stub_request(:get, "http://localhost:1317/test")
+                .to_return(status: 404, body: JSON.generate({ 'error': { 'codespace': 'sdk', 'code': '6', 'message': 'could not read key' } }), headers: {})
+
+            expect{cosmos.query('test')}.to raise_error Bluzelle::Error::ApiError
+        end
+
+        it 'should handle unexpected exception' do
+            stub_request(:get, "http://localhost:1317/test")
+                .to_return(status: 404, body: JSON.generate({ 'error': { 'codespace': 'sdk', 'code': '6' } }), headers: {})
+
+            expect{cosmos.query('test')}.to raise_error Bluzelle::Error::ApiError
+        end
+    end
+
     def get_account_request
         stub_request(:get, "http://localhost:1317/auth/accounts/bluzelle1xhz23a58mku7ch3hx8f9hrx6he6gyujq57y3kp").
         to_return(

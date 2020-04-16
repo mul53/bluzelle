@@ -36,6 +36,23 @@ module Bluzelle
                 return false
             end
 
+            def query(endpoint)
+                begin
+                    r = RestClient.get("#{@endpoint}/#{endpoint}")
+                rescue RestClient::ExceptionWithResponse => err
+                    res = JSON.generate(err.response)
+                    if res.is_a?(String)
+                        raise Error::ApiError.new(res, err.http_code)
+                    elsif res.dig('error', 'message').is_a?(String)
+                        raise Error::ApiError.new(res.dig('error', 'message'), err.http_code)
+                    else
+                        raise 'error occurred'
+                    end
+                else
+                    return JSON.parse(r.body)
+                end
+            end
+
             def send_transaction(method, endpoint, data, gas_info)
                 tx = Transaction.new(method, endpoint, data)
                 tx.set_gas(gas_info)
