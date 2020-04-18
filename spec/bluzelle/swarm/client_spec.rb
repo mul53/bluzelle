@@ -172,7 +172,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should create successfully' do
-      initial_request_stub('create', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
+      initial_request_stub('crud/create', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
       stub = tx_request_stub({})
 
       client.create('key', 'value')
@@ -187,7 +187,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should update key' do
-      initial_request_stub('update', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
+      initial_request_stub('crud/update', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
       stub = tx_request_stub({})
 
       client.update('key', 'value')
@@ -214,7 +214,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should read key' do
-      initial_request_stub('read', { 'Key': 'key' })
+      initial_request_stub('crud/read', { 'Key': 'key' })
 
       tx_request_stub({ 'value': 'value' })
 
@@ -228,7 +228,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should delete key' do
-      initial_request_stub('delete', { 'Key': 'key' })
+      initial_request_stub('crud/delete', { 'Key': 'key' })
       stub = tx_request_stub({ has: true })
 
       client.delete('key')
@@ -255,7 +255,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should return boolean' do
-      initial_request_stub('has', { 'Key': 'key' })
+      initial_request_stub('crud/has', { 'Key': 'key' })
 
       tx_request_stub({ has: true })
 
@@ -284,7 +284,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
     it 'should return keys' do
       keys = %w[key1 key2 key3]
-      initial_request_stub('keys')
+      initial_request_stub('crud/keys')
 
       tx_request_stub({ 'keys': keys })
 
@@ -298,7 +298,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should rename key' do
-      initial_request_stub('rename', { 'Key': 'key', 'NewKey': 'new_key' })
+      initial_request_stub('crud/rename', { 'Key': 'key', 'NewKey': 'new_key' })
       stub = tx_request_stub({})
 
       client.rename('key', 'new_key')
@@ -325,7 +325,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should return tx count' do
-      initial_request_stub('count')
+      initial_request_stub('crud/count')
 
       tx_request_stub({ 'count': 10 })
 
@@ -339,7 +339,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should delete all successfully' do
-      initial_request_stub('deleteall')
+      initial_request_stub('crud/deleteall')
       stub = tx_request_stub({})
 
       client.delete_all
@@ -369,7 +369,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
     it 'should return key values' do
       kvs = { "keyvalues": [{ "key": 'key1', "value": 'value1' }, { "key": 'key2', "value": 'value2' }] }
-      initial_request_stub('keyvalues')
+      initial_request_stub('crud/keyvalues')
 
       tx_request_stub(kvs)
 
@@ -384,7 +384,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
     it 'should update multiple values given key_values' do
       kvs = [{ 'key' => 'key1', 'value' => 'value1' }, { 'key' => 'key2', 'value' => 'value2' }]
-      initial_request_stub('multiupdate', { 'KeyValues' => [{ 'key' => 'key1', 'value' => 'value1' }, { 'key' => 'key2', 'value' => 'value2' }] })
+      initial_request_stub('crud/multiupdate', { 'KeyValues' => [{ 'key' => 'key1', 'value' => 'value1' }, { 'key' => 'key2', 'value' => 'value2' }] })
       stub = tx_request_stub({})
 
       client.multi_update(kvs)
@@ -429,7 +429,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should get lease given key' do
-      initial_request_stub('getlease', { 'Key': 'key' })
+      initial_request_stub('crud/getlease', { 'Key': 'key' })
       tx_request_stub({ 'lease': '20' })
 
       res = client.tx_get_lease('key')
@@ -450,7 +450,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should renew given key and lease' do
-      initial_request_stub('renewlease', { 'Key': 'key', 'Lease': '36966' })
+      initial_request_stub('crud/renewlease', { 'Key': 'key', 'Lease': '36966' })
       stub = tx_request_stub({})
 
       client.renew_lease('key', { 'days': '2', 'hours': '3', 'minutes': '20', 'seconds': '30' })
@@ -465,7 +465,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should renew lease given key and no lease' do
-      initial_request_stub('renewlease', { 'Key': 'key', 'Lease': '0' })
+      initial_request_stub('crud/renewlease', { 'Key': 'key', 'Lease': '0' })
       stub = tx_request_stub({})
 
       client.renew_lease('key')
@@ -480,7 +480,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should renew lease when given no lease' do
-      initial_request_stub('renewleaseall', { 'Lease': '0' })
+      initial_request_stub('crud/renewleaseall', { 'Lease': '0' })
       stub = tx_request_stub({})
 
       client.renew_lease_all
@@ -489,7 +489,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should renew lease when given lease object' do
-      initial_request_stub('renewleaseall', { 'Lease': '36966' })
+      initial_request_stub('crud/renewleaseall', { 'Lease': '36966' })
 
       stub = tx_request_stub({})
 
@@ -524,7 +524,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     it 'should return shortest lease' do
       leases_data = [{ key: 'key1', lease: 100 }, { key: 'key2', lease: 200 }]
 
-      initial_request_stub('getnshortestlease', { N: '10' })
+      initial_request_stub('crud/getnshortestlease', { N: '10' })
 
       tx_request_stub({ keyleases: leases_data })
 

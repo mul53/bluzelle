@@ -39,7 +39,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'create',
+          'crud/create',
           build_params({ Key: key, Value: value, Lease: blocks }),
           @gas_info
         )
@@ -59,7 +59,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'update',
+          'crud/update',
           build_params({ Key: key, Value: value, Lease: blocks }),
           @gas_info
         )
@@ -89,7 +89,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'read',
+          'crud/read',
           build_params({ Key: key }),
           @gas_info
         ).dig('value')
@@ -103,7 +103,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'delete',
+          'crud/delete',
           build_params({ Key: key }),
           @gas_info
         )
@@ -132,7 +132,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'has',
+          'crud/has',
           build_params({ Key: key }),
           @gas_info
         ).dig('has')
@@ -153,7 +153,7 @@ module Bluzelle
       def tx_keys
         @cosmos.send_transaction(
           'post',
-          'keys',
+          'crud/keys',
           build_params({}),
           @gas_info
         ).dig('keys') || []
@@ -171,7 +171,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'rename',
+          'crud/rename',
           build_params({ Key: key, NewKey: new_key }),
           @gas_info
         )
@@ -193,7 +193,7 @@ module Bluzelle
       def tx_count
         @cosmos.send_transaction(
           'post',
-          'count',
+          'crud/count',
           build_params({}),
           @gas_info
         ).dig('count')
@@ -203,7 +203,7 @@ module Bluzelle
       def delete_all
         @cosmos.send_transaction(
           'post',
-          'deleteall',
+          'crud/deleteall',
           build_params({}),
           @gas_info
         )
@@ -224,7 +224,7 @@ module Bluzelle
       def tx_key_values
         @cosmos.send_transaction(
           'post',
-          'keyvalues',
+          'crud/keyvalues',
           build_params({}),
           @gas_info
         ).dig('keyvalues')
@@ -249,7 +249,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'multiupdate',
+          'crud/multiupdate',
           build_params({ KeyValues: key_values }),
           @gas_info
         )
@@ -278,7 +278,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'getlease',
+          'crud/getlease',
           build_params({ Key: key }),
           @gas_info
         ).dig('lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
@@ -296,7 +296,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'renewlease',
+          'crud/renewlease',
           build_params({ Key: key, Lease: blocks }),
           @gas_info
         )
@@ -312,7 +312,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'renewleaseall',
+          'crud/renewleaseall',
           build_params({ Lease: blocks }),
           @gas_info
         )
@@ -342,7 +342,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'getnshortestlease',
+          'crud/getnshortestlease',
           build_params({ N: n }),
           @gas_info
         ).dig('keyleases')
