@@ -2,6 +2,7 @@ require "bundler/setup"
 require "bluzelle"
 require "webmock/rspec"
 require "json"
+require 'pry-rescue/rspec'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

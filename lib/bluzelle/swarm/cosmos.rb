@@ -119,7 +119,7 @@ module Bluzelle
           res = JSON.parse(r.body)
         end
 
-        if res['code'].nil?
+        if res.dig('code').nil?
           @account_info['sequence'] = @account_info['sequence'].to_i + 1
           res
         else

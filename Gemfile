@@ -6,3 +6,5 @@ gemspec
 gem "rake", "~> 12.0"
 gem "rspec", "~> 3.0"
 gem "webmock"
+gem "pry-rescue"
+gem "pry-stack_explorer"

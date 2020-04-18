@@ -12,6 +12,7 @@ module Bluzelle
     TOKEN_NAME = 'ubnt'
     TX_COMMAND = 'txs'
     BROADCAST_RETRY_SECONDS = 1
+    BLOCK_TIME_IN_SECONDS = 5
 
     module_function
 
@@ -133,6 +134,19 @@ module Bluzelle
         account_number: data.dig(:value, :account_info, :account_number),
         sequence: data.dig(:value, :account_info, :sequence)
       }
+    end
+
+    def convert_lease(lease)
+      seconds = 0
+
+      return '0' if lease.nil?
+
+      seconds += lease.dig(:days).nil? ? 0 : (lease.dig(:days).to_i * 24 * 60 * 60)
+      seconds += lease.dig(:hours).nil? ? 0 : (lease.dig(:hours).to_i * 60 * 60)
+      seconds += lease.dig(:minutes).nil? ? 0 : (lease.dig(:minutes).to_i * 60)
+      seconds += lease.dig(:seconds).nil? ? 0 : lease.dig(:seconds).to_i
+
+      (seconds / BLOCK_TIME_IN_SECONDS).to_s
     end
   end
 end
