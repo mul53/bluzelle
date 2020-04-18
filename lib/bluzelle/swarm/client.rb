@@ -25,6 +25,11 @@ module Bluzelle
         @cosmos = Cosmos.new(mnemonic: @mnemonic, endpoint: @endpoint, address: @address)
       end
 
+      # Create a field in the database
+      #
+      # @param [String] key
+      # @param [String] value
+      # @param [Hash] lease
       def create(key, value, lease = nil)
         validate_string(key, 'Key must be a string.')
         validate_string(value, 'Value must be a string.')
@@ -40,6 +45,11 @@ module Bluzelle
         )
       end
 
+      # Update a field in the database
+      #
+      # @param [String] key
+      # @param [String] value
+      # @param [Hash] lease
       def update(key, value, lease = nil)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
         raise ArgumentError, 'Value must be a string' unless value.is_a?(String)
@@ -55,6 +65,12 @@ module Bluzelle
         )
       end
 
+      # Retrieve the value of a key without consensus verification
+      #
+      # @param [String] key
+      # @param [Boolean] prove
+      #
+      # @return [String]
       def read(key, prove)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -63,6 +79,11 @@ module Bluzelle
                .dig('result', 'value')
       end
 
+      # Retrieve the value of a key via a transaction (i.e uses consensus)
+      #
+      # @param [String] key
+      #
+      # @return [String]
       def tx_read(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -74,6 +95,9 @@ module Bluzelle
         ).dig('value')
       end
 
+      # Delete a field from the database
+      #
+      # @param [String] key
       def delete(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -85,6 +109,12 @@ module Bluzelle
         )
       end
 
+      # Query to see if a key is in the database. This function bypasses
+      # the consensus and cryptography mechanisms in favour of speed.
+      #
+      # @param [String] key
+      #
+      # @return [Boolean]
       def has(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -92,6 +122,11 @@ module Bluzelle
                .dig('result', 'has')
       end
 
+      # Query to see if a key is in the database via a transaction (i.e uses consensus)
+      #
+      # @param [String] key
+      #
+      # @return [Boolean]
       def tx_has(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -103,11 +138,18 @@ module Bluzelle
         ).dig('has')
       end
 
+      # Retrieve a list of all keys. This function bypasses the consensus
+      # and cryptography mechanisms in favour of speed.
+      #
+      # @return [Array]
       def keys
         @cosmos.query("#{@app_service}/keys/#{@uuid}")
                .dig('result', 'keys') || []
       end
 
+      # Retrieve a list of all keys via a transaction (i.e use consensus)
+      # 
+      # @return [Array]
       def tx_keys
         @cosmos.send_transaction(
           'post',
@@ -117,6 +159,10 @@ module Bluzelle
         ).dig('keys') || []
       end
 
+      # Change the name of an existing key
+      # 
+      # @param [String] key
+      # @param [String] new_key
       def rename(key, new_key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
         unless new_key.is_a?(String)
@@ -131,11 +177,19 @@ module Bluzelle
         )
       end
 
+      # Retrieve the number of keys in the current database/uuid.
+      # This function bypasses the consensus and cryptography
+      # mechanisms in favor of speed
+      #
+      # @return [Fixnum]
       def count
         @cosmos.query("#{app_service}/count/#{@uuid}")
                .dig('result', 'count')
       end
 
+      # Retrieve the number of keys in the current database/uuid via a transaction
+      #
+      # @return [Fixnum]
       def tx_count
         @cosmos.send_transaction(
           'post',
@@ -145,6 +199,7 @@ module Bluzelle
         ).dig('count')
       end
 
+      # Remove all keys in the current database/uuid
       def delete_all
         @cosmos.send_transaction(
           'post',
@@ -154,11 +209,18 @@ module Bluzelle
         )
       end
 
+      # Enumerate all keys and values in the current database/uuid. 
+      # This function bypasses the consensus and cryptography mechanisms in favor of speed
+      #
+      # @return [Array]
       def key_values
         @cosmos.query("#{app_service}/keyvalues/#{@uuid}")
                .dig('result', 'keyvalues')
       end
 
+      # Enumerate all keys and values in the current database/uuid via a transaction
+      #
+      # @return [Array]
       def tx_key_values
         @cosmos.send_transaction(
           'post',
@@ -168,6 +230,9 @@ module Bluzelle
         ).dig('keyvalues')
       end
 
+      # Update multiple fields in the database
+      # 
+      # @param [Array]
       def multi_update(key_values)
         unless key_values.is_a?(Array)
           raise ArgumentError, 'key_values must be an array'
@@ -190,6 +255,12 @@ module Bluzelle
         )
       end
 
+      # Retrieve the minimum time remaining on the lease for a key. 
+      # This function bypasses the consensus and cryptography mechanisms in favor of speed
+      #
+      # @param [String] key
+      #
+      # @return [String]
       def get_lease(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -197,6 +268,11 @@ module Bluzelle
                .dig('result', 'lease').to_i * Utils::BLOCK_TIME_IN_SECONDS
       end
 
+      # Retrieve the minimum time remaining on the lease for a key, using a transaction
+      # 
+      # @param [String] key
+      # 
+      # @return [String]
       def tx_get_lease(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -208,6 +284,10 @@ module Bluzelle
         ).dig('lease').to_i * Utils::BLOCK_TIME_IN_SECONDS
       end
 
+      # Update the minimum time remaining on the lease for a key
+      #
+      # @param [String] key
+      # @param [Hash] lease
       def renew_lease(key, lease = nil)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
@@ -222,6 +302,9 @@ module Bluzelle
         )
       end
 
+      # Update the minimum time remaining on the lease for all keys
+      #
+      # @param [Hash] lease
       def renew_lease_all(lease = nil)
         blocks = Utils.convert_lease(lease)
 
@@ -235,13 +318,25 @@ module Bluzelle
         )
       end
 
+      # Retrieve a list of the n keys in the database with the shortest leases.
+      # This function bypasses the consensus and cryptography mechanisms in favor of speed
+      #
+      # @param [Fixnum] n
+      #
+      # @return [Array]
       def get_n_shortest_lease(n)
-        raise ArgumentError, 'Invalid valud specified' if n.negative?
+        raise ArgumentError, 'Invalid valid specified' if n.negative?
 
         @cosmos.query("#{@app_service}/getnshortestlease/#{@uuid}/#{n}")
                .dig('result', 'keyleases')
       end
 
+      # Retrieve a list of the N keys/values in the database with the shortest leases, 
+      # using a transaction
+      # 
+      # @param [Fixnum] n
+      #
+      # @return [Array]
       def tx_get_n_shortest_lease(n)
         raise ArgumentError, 'Invalid value specified' if n.negative?
 
@@ -253,17 +348,24 @@ module Bluzelle
         ).dig('keyleases')
       end
 
+      # Retrieve information about the currently active Bluzelle account
+      #
+      # @return [Hash]
       def account
         @cosmos.query("auth/accounts/#{@address}")
                .dig('result', 'value')
       end
 
+      # Retrieve the version of the Bluzelle service
+      #
+      # @return [String]
       def version
         @cosmos.query('node_info')
                .dig('application', 'version')
       end
 
       private
+
       def validate_string(arg, msg)
         raise ArgumentError, msg unless arg.is_a?(String)
       end
