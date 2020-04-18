@@ -148,7 +148,7 @@ module Bluzelle
       end
 
       # Retrieve a list of all keys via a transaction (i.e use consensus)
-      # 
+      #
       # @return [Array]
       def tx_keys
         @cosmos.send_transaction(
@@ -160,7 +160,7 @@ module Bluzelle
       end
 
       # Change the name of an existing key
-      # 
+      #
       # @param [String] key
       # @param [String] new_key
       def rename(key, new_key)
@@ -209,7 +209,7 @@ module Bluzelle
         )
       end
 
-      # Enumerate all keys and values in the current database/uuid. 
+      # Enumerate all keys and values in the current database/uuid.
       # This function bypasses the consensus and cryptography mechanisms in favor of speed
       #
       # @return [Array]
@@ -231,7 +231,7 @@ module Bluzelle
       end
 
       # Update multiple fields in the database
-      # 
+      #
       # @param [Array]
       def multi_update(key_values)
         unless key_values.is_a?(Array)
@@ -255,7 +255,7 @@ module Bluzelle
         )
       end
 
-      # Retrieve the minimum time remaining on the lease for a key. 
+      # Retrieve the minimum time remaining on the lease for a key.
       # This function bypasses the consensus and cryptography mechanisms in favor of speed
       #
       # @param [String] key
@@ -269,9 +269,9 @@ module Bluzelle
       end
 
       # Retrieve the minimum time remaining on the lease for a key, using a transaction
-      # 
+      #
       # @param [String] key
-      # 
+      #
       # @return [String]
       def tx_get_lease(key)
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
@@ -331,9 +331,9 @@ module Bluzelle
                .dig('result', 'keyleases')
       end
 
-      # Retrieve a list of the N keys/values in the database with the shortest leases, 
+      # Retrieve a list of the N keys/values in the database with the shortest leases,
       # using a transaction
-      # 
+      #
       # @param [Fixnum] n
       #
       # @return [Array]
@@ -361,7 +361,7 @@ module Bluzelle
       # @return [String]
       def version
         @cosmos.query('node_info')
-               .dig('application', 'version')
+               .dig('application_version', 'version')
       end
 
       private
