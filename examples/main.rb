@@ -1,12 +1,15 @@
 require 'bluzelle'
 
 client = Bluzelle::Swarm::Client.new(
-  address: 'bluzelle1xhz23a58mku7ch3hx8f9hrx6he6gyujq57y3kp',
-  mnemonic: 'volcano arrest ceiling physical concert sunset absent hungry tobacco canal census era pretty car code crunch inside behind afraid express giraffe reflect stadium luxury',
+  address: 'bluzelle1upsfjftremwgxz3gfy0wf3xgvwpymqx754ssu9',
+  mnemonic: 'around buzz diagram captain obtain detail salon mango muffin brother morning jeans display attend knife carry green dwarf vendor hungry fan route pumpkin car',
   endpoint: 'testnet.public.bluzelle.com:1317',
   chain_id: 'bluzelle',
   uuid: '20fc19d4-7c9d-4b5c-9578-8cedd756e0ea'
 )
 
-puts client.version # 0.0.0-60-g1b32db7
+puts client.version 
+# 0.0.0-60-g1b32db7
+
+puts client.account
  

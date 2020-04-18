@@ -1,6 +1,8 @@
+require "bluzelle/constants"
 require "bluzelle/error"
 require "bluzelle/swarm/transaction"
 require "bluzelle/swarm/transaction_queue"
+require "bluzelle/swarm/request"
 require "bluzelle/swarm/cosmos"
 require "bluzelle/swarm/client"
 require "bluzelle/utils"

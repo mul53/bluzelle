@@ -7,19 +7,12 @@ require 'base64'
 
 module Bluzelle
   module Utils
-    PREFIX = 'bluzelle'
-    PATH = "m/44'/118'/0'/0/0"
-    TOKEN_NAME = 'ubnt'
-    TX_COMMAND = 'txs'
-    BROADCAST_RETRY_SECONDS = 1
-    BLOCK_TIME_IN_SECONDS = 5
-
     module_function
 
     def get_ec_private_key(mnemonic)
       seed = bip39_mnemonic_to_seed(mnemonic)
       node = bip32_from_seed(seed)
-      child = node.node_for_path(PATH)
+      child = node.node_for_path(Constants::PATH)
       ec_pair = create_ec_pair(child.private_key.to_hex)
       ec_pair.priv
     end
@@ -41,7 +34,7 @@ module Bluzelle
     def get_address(pub_key)
       hash = rmd_160_digest(sha_256_digest([pub_key].pack('H*')))
       word = bech32_convert_bits(to_bytes(hash))
-      bech32_encode(PREFIX, word)
+      bech32_encode(Constants::PREFIX, word)
     end
 
     def to_bytes(obj)
@@ -137,16 +130,16 @@ module Bluzelle
     end
 
     def convert_lease(lease)
-      seconds = 0
-
       return '0' if lease.nil?
+
+      seconds = 0
 
       seconds += lease.dig(:days).nil? ? 0 : (lease.dig(:days).to_i * 24 * 60 * 60)
       seconds += lease.dig(:hours).nil? ? 0 : (lease.dig(:hours).to_i * 60 * 60)
       seconds += lease.dig(:minutes).nil? ? 0 : (lease.dig(:minutes).to_i * 60)
       seconds += lease.dig(:seconds).nil? ? 0 : lease.dig(:seconds).to_i
 
-      (seconds / BLOCK_TIME_IN_SECONDS).to_s
+      (seconds / Constants::BLOCK_TIME_IN_SECONDS).to_s
     end
   end
 end

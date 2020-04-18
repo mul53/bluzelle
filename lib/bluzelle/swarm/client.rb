@@ -265,7 +265,7 @@ module Bluzelle
         raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
 
         @cosmos.query("#{@app_service}/getlease/#{@uuid}/#{key}")
-               .dig('result', 'lease').to_i * Utils::BLOCK_TIME_IN_SECONDS
+               .dig('result', 'lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
       end
 
       # Retrieve the minimum time remaining on the lease for a key, using a transaction
@@ -281,7 +281,7 @@ module Bluzelle
           'getlease',
           build_params({ Key: key }),
           @gas_info
-        ).dig('lease').to_i * Utils::BLOCK_TIME_IN_SECONDS
+        ).dig('lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
       end
 
       # Update the minimum time remaining on the lease for a key

@@ -21,9 +21,73 @@ module Bluzelle
       end
 
       def send_account_query
-        r = RestClient.get("#{@endpoint}/auth/accounts/#{@address}")
-        data = JSON.parse(r.body).dig('result', 'value')
+        url = "#{@endpoint}/auth/accounts/#{@address}"
 
+        res = Request.new('get', url).execute
+        data = res.dig('result', 'value')
+
+        update_account_details(data)
+      end
+
+      def query(endpoint)
+        Request.new('get', "#{@endpoint}/#{endpoint}")
+               .execute
+      end
+
+      def send_transaction(method, endpoint, data, gas_info)
+        txn = Transaction.new(method, endpoint, data)
+
+        txn.set_gas(gas_info)
+
+        broadcast_transaction(txn)
+      end
+
+      def send_initial_transaction(txn)
+        url = "#{@endpoint}/#{txn.endpoint}"
+
+        data = Request.new(txn.method, url, txn.data, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).execute
+
+        data = set_fee_gas(txn, data)
+
+        set_fee_amount(txn, data)
+      end
+
+      # Broadcasts a transaction
+      #
+      # @param [Bluzelle::Swarm::Transaction] txn
+      def broadcast_transaction(txn)
+        data = send_initial_transaction(txn)
+
+        raise ArgumentError('Invalid Transaction') if data.nil?
+
+        url = "#{@endpoint}/#{Constants::TX_COMMAND}"
+        res = Request.new('post', url, sign(data)).execute
+
+        if res.dig('code').nil?
+          update_sequence
+          res
+        else
+          handle_broadcast_error(res.dig('raw_log'), txn)
+        end
+      end
+
+      # Updates account sequence and retries broadcast
+      #
+      # @param [Bluzelle::Swarm::Transaction] txn
+      def update_account_sequence(txn)
+        if txn.retries_left != 0
+          retry_broadcast(txn)
+        else
+          raise Error::ApiError, 'Invalid chain id'
+        end
+      end
+
+      private
+
+      # Updates account details
+      #
+      # @param [Hash] data
+      def update_account_details(data)
         account_number = data.dig('result', 'value', 'account_number')
         sequence = data.dig('result', 'value', 'sequence')
 
@@ -37,115 +101,84 @@ module Bluzelle
         false
       end
 
-      def query(endpoint)
-        r = RestClient.get("#{@endpoint}/#{endpoint}")
-      rescue RestClient::ExceptionWithResponse => e
-        res = JSON.generate(e.response)
-        if res.is_a?(String)
-          raise Error::ApiError.new(res, e.http_code)
-        elsif res.dig('error', 'message').is_a?(String)
-          raise Error::ApiError.new(res.dig('error', 'message'), e.http_code)
+      # Retry broadcast after failure
+      #
+      # @param [Bluzelle::Swarm::Transaction]
+      def retry_broadcast(txn)
+        sleep Constants::BROADCAST_RETRY_SECONDS
+
+        changed = send_account_query
+
+        if changed
+          broadcast_transaction(txn)
         else
-          raise Error::ApiError.new('error occurred', e.http_code)
-        end
-      else
-        JSON.parse(r.body)
-      end
-
-      def send_transaction(method, endpoint, data, gas_info)
-        tx = Transaction.new(method, endpoint, data)
-        tx.set_gas(gas_info)
-        broadcast_transaction(tx)
-      end
-
-      def send_initial_transaction(tx)
-        url = "#{@endpoint}/#{tx.endpoint}"
-        chain_id = tx.data.dig('BaseReq', 'chain_id')
-
-        data = nil
-
-        begin
-          r = RestClient::Request.execute(method: tx.method,
-                                          url: url, payload: tx.data,
-                                          headers: { 'Content-Type': 'application/x-www-form-urlencoded' })
-        rescue RestClient::ExceptionWithResponse => e
-          raise Error: ApiError.new('error occurred', e.http_code)
-        else
-          data = JSON.parse(r.body)
-
-          if data.dig('value', 'fee', 'gas').to_i > tx.max_gas
-            data['value']['fee']['gas'] = tx.max_gas.to_s
-          end
-
-          if !tx.max_fee.nil?
-            data['value']['fee']['amount'] = [{
-              'denom': Utils::TOKEN_NAME.to_s,
-              'amount': tx.max_fee.to_s
-            }]
-          elsif !tx.gas_price.nil?
-            data['value']['fee']['amount'] = [{
-              'denom': Utils::TOKEN_NAME.to_s,
-              'amount': (data['value']['fee']['gas'] * tx.gas_price).to_s
-            }]
-          end
-
-          data
+          txn.retries_left -= 1
+          update_account_sequence(txn)
         end
       end
 
-      def broadcast_transaction(tx)
-        data = send_initial_transaction(tx)
-        chain_id = data.dig('BaseReq', 'chain_id')
+      # Handle broadcast error
+      #
+      # @param [String] raw_log
+      # @param [Bluzelle::Swarm::Transaction] txn
+      def handle_broadcast_error(raw_log, txn)
+        if raw_log.include?('signature verification failed')
+          update_account_sequence(txn)
+        else
+          raise Error::ApiError, res['raw_log']
+        end
+      end
 
-        raise ArgumentError('Invalid Transaction') if data.nil?
+      def update_sequence
+        @account_info[:sequence] = @account_info[:sequence].to_i + 1
+      end
 
-        data.dig('value')
+      # Signs data
+      #
+      # @param [Hash] data
+      def sign(data)
+        res = data.clone
+        chain_id = res.dig('BaseReq', 'chain_id') || ''
 
-        data['value']['signatures'] = []
-        data['value']['memo'] = Utils.make_random_string
+        res['value']['signatures'] = []
+        res['value']['memo'] = Utils.make_random_string
 
         sig = Utils.sign_transaction(Utils.get_ec_private_key(@mnemonic), data, chain_id)
 
-        data['value']['signatures'] << sig
-        data['value']['signature'] = sig
+        res['value']['signatures'] << sig
+        res['value']['signature'] = sig
 
-        res = nil
-
-        begin
-          r = RestClient.post("#{@endpoint}/#{Utils::TX_COMMAND}", data)
-        rescue RestClient::ExceptionWithResponse => e
-          raise Error::ApiError, e.message
-        else
-          res = JSON.parse(r.body)
-        end
-
-        if res.dig('code').nil?
-          @account_info['sequence'] = @account_info['sequence'].to_i + 1
-          res
-        else
-          if res['raw_log'].include?('signature verification failed')
-            update_account_sequence(tx)
-          else
-            raise Error::ApiError, res['raw_log']
-          end
-        end
+        res
       end
 
-      def update_account_sequence(tx)
-        if tx.retries_left != 0
-          sleep Utils::BROADCAST_RETRY_SECONDS
+      # Set fee gas
+      def set_fee_gas(txn, data)
+        res = data.clone
 
-          changed = send_account_query
-
-          if changed
-            broadcast_transaction(tx)
-          else
-            tx.retries_left -= 1
-            update_account_sequence(tx)
-          end
-        else
-          raise Error::ApiError, 'Invalid chain id'
+        if res.dig('value', 'fee', 'gas').to_i > txn.max_gas
+          res['value']['fee']['gas'] = txn.max_gas.to_s
         end
+
+        res
+      end
+
+      # Set fee amount
+      def set_fee_amount(txn, data)
+        res = data.clone
+
+        if !txn.max_fee.nil?
+          res['value']['fee']['amount'] = [{
+            'denom': Constants::TOKEN_NAME.to_s,
+            'amount': txn.max_fee.to_s
+          }]
+        elsif !txn.gas_price.nil?
+          res['value']['fee']['amount'] = [{
+            'denom': Constants::TOKEN_NAME.to_s,
+            'amount': (res['value']['fee']['gas'] * txn.gas_price).to_s
+          }]
+        end
+
+        res
       end
     end
   end

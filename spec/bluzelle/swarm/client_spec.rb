@@ -553,13 +553,15 @@ RSpec.describe Bluzelle::Swarm::Client do
 
     it 'should return client version' do
       version_info = {
-        "name": 'BluzelleService',
-        "server_name": 'blzd',
-        "client_name": 'blzcli',
-        "version": '0.0.0-39-g8895e3e',
-        "commit": '8895e3edf0a3ede0f6ed30f2224930e8faa1236e',
-        "build_tags": 'ledger,faucet,cosmos-sdk v0.38.1',
-        "go": 'go version go1.13.4 linux/amd64'
+          "application": {
+            "name": 'BluzelleService',
+            "server_name": 'blzd',
+            "client_name": 'blzcli',
+            "version": '0.0.0-39-g8895e3e',
+            "commit": '8895e3edf0a3ede0f6ed30f2224930e8faa1236e',
+            "build_tags": 'ledger,faucet,cosmos-sdk v0.38.1',
+            "go": 'go version go1.13.4 linux/amd64'
+          } 
       }
 
       stub_request(:get, 'http://localhost:1317/node_info')
@@ -567,7 +569,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       version = client.version
 
-      expect(version).to eq(version_info['version'])
+      expect(version).to eq(version_info[:version])
     end
   end
 
