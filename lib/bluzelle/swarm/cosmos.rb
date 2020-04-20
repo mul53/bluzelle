@@ -6,11 +6,12 @@ require 'json'
 module Bluzelle
   module Swarm
     class Cosmos
-      attr_reader :mnemonic, :endpoint, :address
+      attr_reader :mnemonic, :endpoint, :address, :chain_id
       attr_accessor :account_info
 
       def initialize(options = {})
         @mnemonic = options[:mnemonic]
+        @chain_id = options[:chain_id]
         @endpoint = options[:endpoint]
         @address = options[:address]
         @account_info = {}
@@ -42,7 +43,7 @@ module Bluzelle
         broadcast_transaction(txn)
       end
 
-      def send_initial_transaction(txn)
+      def validate_transaction(txn)
         url = "#{@endpoint}/#{txn.endpoint}"
 
         data = Request.new(txn.method, url, txn.data, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).execute
@@ -56,12 +57,15 @@ module Bluzelle
       #
       # @param [Bluzelle::Swarm::Transaction] txn
       def broadcast_transaction(txn)
-        data = send_initial_transaction(txn)
+        data = validate_transaction(txn)
 
         raise ArgumentError('Invalid Transaction') if data.nil?
 
         url = "#{@endpoint}/#{Constants::TX_COMMAND}"
-        res = Request.new('post', url, sign(data)).execute
+        
+        payload = { tx: sign(data).dig('value'), mode: 'block' }
+        
+        res = Request.new('post', url, payload).execute
 
         if res.dig('code').nil?
           update_sequence
@@ -88,8 +92,8 @@ module Bluzelle
       #
       # @param [Hash] data
       def update_account_details(data)
-        account_number = data.dig('result', 'value', 'account_number')
-        sequence = data.dig('result', 'value', 'sequence')
+        account_number = data.dig('account_number')
+        sequence = data.dig('sequence')
 
         @account_info[:account_number] = account_number
 
@@ -125,7 +129,8 @@ module Bluzelle
         if raw_log.include?('signature verification failed')
           update_account_sequence(txn)
         else
-          raise Error::ApiError, res['raw_log']
+          puts raw_log
+          raise Error::ApiError, raw_log
         end
       end
 
@@ -143,19 +148,50 @@ module Bluzelle
         res['value']['signatures'] = []
         res['value']['memo'] = Utils.make_random_string
 
-        sig = Utils.sign_transaction(Utils.get_ec_private_key(@mnemonic), data, chain_id)
+        sig = Utils.sign_transaction(
+            Utils.get_ec_private_key(@mnemonic), data, chain_id, @account_info[:account_number], @account_info[:sequence])
 
         res['value']['signatures'] << sig
-        res['value']['signature'] = sig
 
         res
+      end
+
+      def sign_transaction(txn)
+        payload = {
+          'account_number' => @account_info[:account_number],
+          'chain_id' => @chain_id,
+          'fee' => txn['fee'],
+          'memo' => txn['memo'],
+          'msgs' => @account_info[:sequence].to_s
+        }
+
+        payload = JSON.generate(payload)
+
+        pk = Secp256k1::PrivateKey.new(privkey: private_key.to_bytes, raw: true)
+        rs = pk.ecdsa_sign payload
+        r = rs.slice(0, 32).read_string.reverse
+        s = rs.slice(32, 32).read_string.reverse
+        sig = "#{r}#{s}"
+        Utils.to_base64(sig)
+      end
+
+      def build_signature(txn)
+        [{
+          'account_number' => @account_info[:account_number].to_s,
+          'pub_key' => {
+            'type' => '',
+            'value' => Utils.to_base64(private_key),
+          },
+          'sequence' => @account_info['sequence'].to_s,
+          'signature' => sign_transaction(txn)
+        }]
       end
 
       # Set fee gas
       def set_fee_gas(txn, data)
         res = data.clone
 
-        if res.dig('value', 'fee', 'gas').to_i > txn.max_gas
+        if res.dig('value', 'fee', 'gas').to_i > txn.max_gas && txn.max_gas != 0
           res['value']['fee']['gas'] = txn.max_gas.to_s
         end
 

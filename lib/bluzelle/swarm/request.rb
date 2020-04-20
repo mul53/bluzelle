@@ -8,7 +8,7 @@ module Bluzelle
       def initialize(method, url, payload = {}, options = {})
         @method = method
         @url = url
-        @payload = payload
+        @payload = JSON.generate(payload)
         @headers = options.dig(:headers)
       end
 

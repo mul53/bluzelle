@@ -100,7 +100,8 @@ module Bluzelle
 
     def sanitize_str(str); end
 
-    def sign_transaction(key, data, chain_id)
+    # TODO operates on data of a different class move to class
+    def sign_transaction(key, data, chain_id, account_number, sequence)
       key_pair = open_key(key)
 
       payload = {
@@ -124,8 +125,8 @@ module Bluzelle
           )
         },
         signature: signature,
-        account_number: data.dig(:value, :account_info, :account_number),
-        sequence: data.dig(:value, :account_info, :sequence)
+        account_number: account_number,
+        sequence: sequence
       }
     end
 

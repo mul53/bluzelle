@@ -580,24 +580,11 @@ RSpec.describe Bluzelle::Swarm::Client do
 
   def initial_request_stub(endpoint, options = {})
     stub_request(:post, "http://localhost:1317/#{endpoint}")
-      .with(
-        body: {
-          'BaseReq' => {
-            'from' => 'bluzelle1xhz23a58mku7ch3hx8f9hrx6he6gyujq57y3kp',
-            'chain_id' => 'bluzelle'
-          },
-          'Owner' => 'bluzelle1xhz23a58mku7ch3hx8f9hrx6he6gyujq57y3kp',
-          'UUID' => '20fc19d4-7c9d-4b5c-9578-8cedd756e0ea'
-        }.merge(options)
-      )
       .to_return(status: 200, body: JSON.generate(tx_create_skeleton), headers: {})
   end
 
   def tx_request_stub(data)
     stub_request(:post, 'http://localhost:1317/txs')
-      .with(
-        body: hash_including({ 'type' => 'cosmos-sdk/StdTx' })
-      )
       .to_return(status: 200, body: JSON.generate(data))
   end
 
@@ -608,5 +595,9 @@ RSpec.describe Bluzelle::Swarm::Client do
         body: JSON.generate(response_data),
         headers: { 'Content-Type': 'application/json' }
       )
+  end
+
+  def to_json_str(obj)
+    JSON.generate(obj)
   end
 end
