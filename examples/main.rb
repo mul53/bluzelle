@@ -32,4 +32,3 @@ puts client.count
 # 0
 sep
 
-client.create('key', 'v')

@@ -4,6 +4,7 @@ PATH
     bluzelle (0.1.0)
       bip_mnemonic
       bitcoin-ruby
+      bitcoin-secp256k1
       money-tree
       openssl
       rest-client
@@ -20,6 +21,8 @@ GEM
       eventmachine
       ffi
       scrypt
+    bitcoin-secp256k1 (0.5.2)
+      ffi (>= 1.9.25)
     coderay (1.1.2)
     crack (0.4.3)
       safe_yaml (~> 1.0.0)

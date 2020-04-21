@@ -89,45 +89,13 @@ module Bluzelle
       random_string = ''
       chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.chars
 
-      0.upto(length) { random_string << chars.sample }
+      1.upto(length) { random_string << chars.sample }
 
       random_string
     end
 
     def to_base64(str)
-      Base64.encode64(str)
-    end
-
-    def sanitize_str(str); end
-
-    # TODO operates on data of a different class move to class
-    def sign_transaction(key, data, chain_id, account_number, sequence)
-      key_pair = open_key(key)
-
-      payload = {
-        account_number: data.dig(:value, :account_info, :account_number) || '0',
-        chain_id: chain_id,
-        fee: data.dig(:value, :fee),
-        memo: data.dig(:value, :memo),
-        msgs: data.dig(:value, :msg),
-        sequence: data.dig(:value, :account_info, :sequence) || '0'
-      }
-
-      jstr = JSON.generate(payload)
-      hash = sha_256_digest(jstr)
-      signature = to_base64(key_pair.dsa_sign_asn1(hash))
-
-      {
-        pub_key: {
-          type: 'tendermint/PubKeySecp256k1',
-          value: to_base64(
-            [compressed_pub_key(open_key(key))].pack('H*')
-          )
-        },
-        signature: signature,
-        account_number: account_number,
-        sequence: sequence
-      }
+      Base64.strict_encode64(str)
     end
 
     def convert_lease(lease)
@@ -141,6 +109,29 @@ module Bluzelle
       seconds += lease.dig(:seconds).nil? ? 0 : lease.dig(:seconds).to_i
 
       (seconds / Constants::BLOCK_TIME_IN_SECONDS).to_s
+    end
+
+    # Sorts a hash by key
+    #
+    # @param [Hash] hash
+    def sort_hash(hash)
+      hash_clone = hash.clone
+
+      hash_clone.each do |key, value|
+        hash_clone[key] = sort_hash(value) if value.is_a?(Hash)
+
+        next unless value.is_a?(Array)
+
+        arr = []
+
+        hash_clone[key].each do |el|
+          arr << sort_hash(el)
+        end
+
+        hash_clone[key] = arr
+      end
+
+      hash_clone.sort.to_h
     end
   end
 end

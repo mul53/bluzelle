@@ -133,50 +133,6 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
     end
   end
 
-  describe '#broadcast_transaction' do
-    before do
-      @account_request_stub = get_account_request
-      get_skeleton_request(JSON.generate(tx_create_skeleton))
-    end
-
-    it 'should send broadcast successfully' do
-      stub_request(:post, 'http://localhost:1317/txs')
-        .to_return(status: 200, body: JSON.generate(response_data), headers: {})
-
-      tx = Bluzelle::Swarm::Transaction.new('post', 'crud/create', data)
-      tx.set_gas(gas_params)
-
-      res = cosmos.broadcast_transaction(tx)
-
-      expect(res).not_to be_nil
-    end
-
-    it 'should handle invalid chain id' do
-      stub_request(:post, 'http://localhost:1317/txs')
-        .to_return(status: 200, body: JSON.generate({ code: 4, raw_log: 'signature verification failed' }), headers: {})
-
-      tx = Bluzelle::Swarm::Transaction.new('post', 'crud/create', data)
-      tx.set_gas(gas_params)
-
-      expect do
-        cosmos.broadcast_transaction(tx)
-      end.to raise_error Bluzelle::Error::ApiError
-    end
-
-    it 'should retry request 10 times' do
-      stub_request(:post, 'http://localhost:1317/txs')
-        .to_return(status: 200, body: JSON.generate({ code: 4, raw_log: 'signature verification failed' }), headers: {})
-
-      tx = Bluzelle::Swarm::Transaction.new('post', 'crud/create', data)
-      tx.set_gas(gas_params)
-
-      expect do
-        cosmos.broadcast_transaction(tx)
-      end.to raise_error Bluzelle::Error::ApiError
-      expect(@account_request_stub).to have_been_made.times(11)
-    end
-  end
-
   describe '#query' do
     before do
       get_account_request

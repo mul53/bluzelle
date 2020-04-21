@@ -2,6 +2,7 @@
 
 require 'rest-client'
 require 'json'
+require 'secp256k1'
 
 module Bluzelle
   module Swarm
@@ -16,18 +17,9 @@ module Bluzelle
         @address = options[:address]
         @account_info = {}
 
-        Utils.validate_address(@address, @mnemonic)
+        validate_address
 
-        send_account_query
-      end
-
-      def send_account_query
-        url = "#{@endpoint}/auth/accounts/#{@address}"
-
-        res = Request.new('get', url).execute
-        data = res.dig('result', 'value')
-
-        update_account_details(data)
+        fetch_account
       end
 
       def query(endpoint)
@@ -37,35 +29,51 @@ module Bluzelle
 
       def send_transaction(method, endpoint, data, gas_info)
         txn = Transaction.new(method, endpoint, data)
-
         txn.set_gas(gas_info)
 
-        broadcast_transaction(txn)
+        # fetch skeleton
+        skeleton = fetch_txn_skeleton(txn)
+        # set gas
+        skeleton = update_gas(txn, skeleton)
+        skeleton = update_fee_amount(txn, skeleton)
+        # set memo
+        skeleton = update_memo(skeleton)
+        # sort
+        skeleton = Utils.sort_hash(skeleton)
+
+        # sign txn
+        skeleton['signatures'] = [{
+          'account_number' => @account_info['account_number'].to_s,
+          'pub_key' => {
+            'type' => 'tendermint/PubKeySecp256k1',
+            'value' => Utils.to_base64(
+              [Utils.compressed_pub_key(Utils.open_key(@private_key))].pack('H*')
+            )
+          },
+          'sequence' => @account_info['sequence'].to_s,
+          'signature' => sign_transaction(skeleton)
+        }]
+
+        broadcast_transaction(Transaction.new('post', Constants::TX_COMMAND, skeleton))
       end
 
-      def validate_transaction(txn)
-        url = "#{@endpoint}/#{txn.endpoint}"
+      private
 
-        data = Request.new(txn.method, url, txn.data, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).execute
+      # Account query
+      def fetch_account
+        url = "#{@endpoint}/auth/accounts/#{@address}"
+        res = Request.new('get', url).execute
 
-        data = set_fee_gas(txn, data)
-
-        set_fee_amount(txn, data)
+        update_account_details(res.dig('result', 'value'))
       end
 
       # Broadcasts a transaction
       #
       # @param [Bluzelle::Swarm::Transaction] txn
       def broadcast_transaction(txn)
-        data = validate_transaction(txn)
-
-        raise ArgumentError('Invalid Transaction') if data.nil?
-
-        url = "#{@endpoint}/#{Constants::TX_COMMAND}"
-        
-        payload = { tx: sign(data).dig('value'), mode: 'block' }
-        
-        res = Request.new('post', url, payload).execute
+        url = "#{@endpoint}/#{txn.endpoint}"
+        payload = { 'mode' => 'block', 'tx' => txn.data }
+        res = Request.new(txn.method, url, payload).execute
 
         if res.dig('code').nil?
           update_sequence
@@ -86,7 +94,31 @@ module Bluzelle
         end
       end
 
-      private
+      # Fetch transaction skeleton
+      def fetch_txn_skeleton(txn)
+        url = "#{@endpoint}/#{txn.endpoint}"
+        data = Request.new(txn.method, url, txn.data, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).execute
+        data['value']
+      end
+
+      # Check if address and mnemonic are valid
+      def validate_address
+        priv_key = Utils.get_ec_private_key(@mnemonic)
+        pub_key = Utils.get_ec_public_key_from_priv(priv_key)
+
+        if Utils.get_address(pub_key) != @address
+          raise ArgumentError, 'Bad credentials - verify your address and mnemonic'
+        end
+
+        set_private_key(priv_key)
+      end
+
+      # Set private key
+      #
+      # @param [String] key
+      def set_private_key(key)
+        @private_key = key
+      end
 
       # Updates account details
       #
@@ -95,10 +127,10 @@ module Bluzelle
         account_number = data.dig('account_number')
         sequence = data.dig('sequence')
 
-        @account_info[:account_number] = account_number
+        @account_info['account_number'] = account_number
 
-        if @account_info[:sequence] != sequence
-          @account_info[:sequence] = sequence
+        if @account_info['sequence'] != sequence
+          @account_info['sequence'] = sequence
           return true
         end
 
@@ -109,16 +141,11 @@ module Bluzelle
       #
       # @param [Bluzelle::Swarm::Transaction]
       def retry_broadcast(txn)
+        txn.retries_left -= 1
+
         sleep Constants::BROADCAST_RETRY_SECONDS
 
-        changed = send_account_query
-
-        if changed
-          broadcast_transaction(txn)
-        else
-          txn.retries_left -= 1
-          update_account_sequence(txn)
-        end
+        broadcast_transaction(txn)
       end
 
       # Handle broadcast error
@@ -126,6 +153,7 @@ module Bluzelle
       # @param [String] raw_log
       # @param [Bluzelle::Swarm::Transaction] txn
       def handle_broadcast_error(raw_log, txn)
+        puts raw_log
         if raw_log.include?('signature verification failed')
           update_account_sequence(txn)
         else
@@ -134,87 +162,83 @@ module Bluzelle
         end
       end
 
+      # Update account sequence
       def update_sequence
         @account_info[:sequence] = @account_info[:sequence].to_i + 1
       end
 
-      # Signs data
+      # Sign transaction
       #
-      # @param [Hash] data
-      def sign(data)
-        res = data.clone
-        chain_id = res.dig('BaseReq', 'chain_id') || ''
-
-        res['value']['signatures'] = []
-        res['value']['memo'] = Utils.make_random_string
-
-        sig = Utils.sign_transaction(
-            Utils.get_ec_private_key(@mnemonic), data, chain_id, @account_info[:account_number], @account_info[:sequence])
-
-        res['value']['signatures'] << sig
-
-        res
-      end
-
+      # @param txn
       def sign_transaction(txn)
         payload = {
-          'account_number' => @account_info[:account_number],
+          'account_number' => @account_info['account_number'].to_s,
           'chain_id' => @chain_id,
           'fee' => txn['fee'],
           'memo' => txn['memo'],
-          'msgs' => @account_info[:sequence].to_s
+          'msgs' => txn['msg'],
+          'sequence' => @account_info['sequence'].to_s
         }
 
-        payload = JSON.generate(payload)
-
-        pk = Secp256k1::PrivateKey.new(privkey: private_key.to_bytes, raw: true)
-        rs = pk.ecdsa_sign payload
-        r = rs.slice(0, 32).read_string.reverse
-        s = rs.slice(32, 32).read_string.reverse
-        sig = "#{r}#{s}"
-        Utils.to_base64(sig)
+        Utils.to_base64(ecdsa_sign(json_str(payload)))
       end
 
-      def build_signature(txn)
-        [{
-          'account_number' => @account_info[:account_number].to_s,
-          'pub_key' => {
-            'type' => '',
-            'value' => Utils.to_base64(private_key),
-          },
-          'sequence' => @account_info['sequence'].to_s,
-          'signature' => sign_transaction(txn)
-        }]
+      # Generates a ECDSA signature
+      #
+      # @param [Hash] payload
+      def ecdsa_sign(payload)
+        pk = Secp256k1::PrivateKey.new(privkey: hex_encoded_private_key, raw: true)
+        rs = pk.ecdsa_sign(payload)
+        r = rs.slice(0, 32).read_string.reverse
+        s = rs.slice(32, 32).read_string.reverse
+        "#{r}#{s}"
+      end
+
+      # Hex encoded private key
+      def hex_encoded_private_key
+        [@private_key].pack('H*')
+      end
+
+      # Generates a json string from hash
+      #
+      # @param [Hash] hash
+      def json_str(hash)
+        JSON.generate(hash)
       end
 
       # Set fee gas
-      def set_fee_gas(txn, data)
+      def update_gas(txn, data)
         res = data.clone
 
-        if res.dig('value', 'fee', 'gas').to_i > txn.max_gas && txn.max_gas != 0
-          res['value']['fee']['gas'] = txn.max_gas.to_s
+        if res.dig('fee', 'gas').to_i > txn.max_gas && txn.max_gas != 0
+          res['fee']['gas'] = txn.max_gas.to_s
         end
 
         res
       end
 
       # Set fee amount
-      def set_fee_amount(txn, data)
+      def update_fee_amount(txn, data)
         res = data.clone
 
         if !txn.max_fee.nil?
-          res['value']['fee']['amount'] = [{
+          res['fee']['amount'] = [{
             'denom': Constants::TOKEN_NAME.to_s,
             'amount': txn.max_fee.to_s
           }]
         elsif !txn.gas_price.nil?
-          res['value']['fee']['amount'] = [{
+          res['fee']['amount'] = [{
             'denom': Constants::TOKEN_NAME.to_s,
-            'amount': (res['value']['fee']['gas'] * txn.gas_price).to_s
+            'amount': (res['fee']['gas'] * txn.gas_price).to_s
           }]
         end
 
         res
+      end
+
+      def update_memo(txn)
+        txn['memo'] = Utils.make_random_string
+        txn
       end
     end
   end

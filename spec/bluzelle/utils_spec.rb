@@ -35,22 +35,4 @@ RSpec.describe Bluzelle::Utils do
       expect(str1).not_to eq(str2)
     end
   end
-
-  describe '#sign_transaction' do
-    it 'should sign transaction data and return obj' do
-      expect(subject.sign_transaction('f02e2c689c06fa26587592b2232275da63b72a369330d89ae1ff6918afc1a2ab',
-                                      {
-                                        'value': {
-                                          'fee': '',
-                                          'memo': '72a369330d89ae1ff6918',
-                                          'msg': '',
-                                          'account_info': {
-                                            'account_number': '123',
-                                            'sequence': '1'
-                                          }
-                                        }
-                                      },
-                                      10)).not_to be_nil
-    end
-  end
 end

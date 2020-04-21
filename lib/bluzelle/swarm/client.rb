@@ -22,7 +22,7 @@ module Bluzelle
         @app_service = 'crud'
         @gas_info = options[:gas_info]
 
-        @cosmos = Cosmos.new(mnemonic: @mnemonic, endpoint: @endpoint, address: @address)
+        @cosmos = Cosmos.new(mnemonic: @mnemonic, endpoint: @endpoint, address: @address, chain_id: @chain_id)
       end
 
       # Create a field in the database
@@ -215,7 +215,7 @@ module Bluzelle
       # @return [Array]
       def key_values
         @cosmos.query("#{app_service}/keyvalues/#{@uuid}")
-               .dig('result', 'keyvalues')
+               .dig('result', 'keyvalues') || []
       end
 
       # Enumerate all keys and values in the current database/uuid via a transaction
@@ -227,7 +227,7 @@ module Bluzelle
           'crud/keyvalues',
           build_params({}),
           @gas_info
-        ).dig('keyvalues')
+        ).dig('keyvalues') || []
       end
 
       # Update multiple fields in the database
@@ -372,12 +372,12 @@ module Bluzelle
 
       def build_params(params)
         {
-          BaseReq: {
-            from: @address,
-            chain_id: @chain_id
+          'BaseReq' => {
+            'chain_id' => @chain_id,
+            'from' => @address
           },
-          UUID: @uuid,
-          Owner: @address
+          'Owner' => @address,
+          'UUID' => @uuid
         }.merge(params)
       end
     end

@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency 'bitcoin-ruby'
+  spec.add_dependency 'bitcoin-secp256k1'
   spec.add_dependency 'money-tree'
   spec.add_dependency 'bip_mnemonic'
   spec.add_dependency 'openssl'
