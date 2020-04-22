@@ -3,15 +3,15 @@
 module Bluzelle
   module Error
     class Error < StandardError
-      attr_reader :code
-
-      def initialize(msg = 'Error occurred', code = nil)
+      def initialize(msg = 'Error occurred')
         super(msg)
-        @code = code
       end
     end
 
     class ApiError < Error
+      def initialize(msg)
+        super("Api: #{msg}")
+      end
     end
   end
 end
