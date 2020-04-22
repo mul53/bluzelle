@@ -31,4 +31,5 @@ sep
 puts client.count
 # 0
 sep
+puts client.tx_keys
 
