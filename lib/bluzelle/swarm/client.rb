@@ -6,7 +6,7 @@ module Bluzelle
       attr_reader :address, :mnemonic, :uuid, :chain_id, :endpoint, :app_service
       attr_reader :cosmos
 
-      # Initializes a new client object
+      # Creates a new Bluzelle connection.
 
       # @param options [Hash]
       # @return [Bluzelle::Swarm::Client]
@@ -27,9 +27,9 @@ module Bluzelle
 
       # Create a field in the database
       #
-      # @param [String] key
-      # @param [String] value
-      # @param [Hash] lease
+      # @param [String] key The name of the key to create
+      # @param [String] value The string value to set the key
+      # @param [Hash] lease Minimum time for key to remain in database
       def create(key, value, lease = nil)
         validate_string(key, 'Key must be a string.')
         validate_string(value, 'Value must be a string.')

@@ -188,7 +188,7 @@ module Bluzelle
       def ecdsa_sign(payload)
         pk = Secp256k1::PrivateKey.new(privkey: hex_encoded_private_key, raw: true)
         rs = pk.ecdsa_sign(payload)
-        r = rs.slice(32, 32).read_string.reverse
+        r = rs.slice(0, 32).read_string.reverse
         s = rs.slice(32, 32).read_string.reverse
         "#{r}#{s}"
       end
