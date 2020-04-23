@@ -35,7 +35,8 @@ module Bluzelle
         validate_string(value, 'Value must be a string.')
 
         blocks = Utils.convert_lease(lease)
-        raise ArgumentError, 'Invalid lease time' if blocks.to_i.negative?
+
+        validate_positive_number(blocks, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
@@ -51,11 +52,12 @@ module Bluzelle
       # @param [String] value
       # @param [Hash] lease
       def update(key, value, lease = nil)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
-        raise ArgumentError, 'Value must be a string' unless value.is_a?(String)
+        validate_string(key, 'Key must be a string')
+        validate_string(value, 'Value must be a string')
 
         blocks = Utils.convert_lease(lease)
-        raise ArgumentError, 'Invalid lease time' if blocks.to_i.negative?
+
+        validate_positive_number(blocks, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
@@ -72,7 +74,7 @@ module Bluzelle
       #
       # @return [String]
       def read(key, prove)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'Key must be a string')
 
         url = prove ? "#{@app_service}/pread/#{@uuid}/#{key}" : "#{@app_service}/read/#{@uuid}/#{key}"
         @cosmos.query(url)
@@ -85,7 +87,7 @@ module Bluzelle
       #
       # @return [String]
       def tx_read(key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
           'post',
@@ -99,7 +101,7 @@ module Bluzelle
       #
       # @param [String] key
       def delete(key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
           'post',
@@ -116,7 +118,7 @@ module Bluzelle
       #
       # @return [Boolean]
       def has(key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'Key must be a string')
 
         @cosmos.query("#{@app_service}/has/#{@uuid}/#{key}")
                .dig('result', 'has')
@@ -128,7 +130,7 @@ module Bluzelle
       #
       # @return [Boolean]
       def tx_has(key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
           'post',
@@ -164,10 +166,8 @@ module Bluzelle
       # @param [String] key
       # @param [String] new_key
       def rename(key, new_key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
-        unless new_key.is_a?(String)
-          raise ArgumentError, 'New key must be a string'
-        end
+        validate_string(key, 'key must be a string')
+        validate_string(new_key, 'new_key must be a string')
 
         @cosmos.send_transaction(
           'post',
@@ -234,17 +234,11 @@ module Bluzelle
       #
       # @param [Array]
       def multi_update(key_values)
-        unless key_values.is_a?(Array)
-          raise ArgumentError, 'key_values must be an array'
-        end
+        validate_array(key_values, 'key_values must be an array')
 
         key_values.each do |key_value|
-          unless key_value.dig('key').is_a?(String)
-            raise ArgumentError, 'All keys must be strings'
-          end
-          unless key_value.dig('value').is_a?(String)
-            raise ArgumentError, 'All values must be string'
-          end
+          validate_string(key_value.dig('key'), 'All keys must be strings')
+          validate_string(key_value.dig('value'), 'All values must be string')
         end
 
         @cosmos.send_transaction(
@@ -262,7 +256,7 @@ module Bluzelle
       #
       # @return [String]
       def get_lease(key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'key must be a string')
 
         @cosmos.query("#{@app_service}/getlease/#{@uuid}/#{key}")
                .dig('result', 'lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
@@ -274,7 +268,7 @@ module Bluzelle
       #
       # @return [String]
       def tx_get_lease(key)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'key must be a string')
 
         @cosmos.send_transaction(
           'post',
@@ -289,10 +283,11 @@ module Bluzelle
       # @param [String] key
       # @param [Hash] lease
       def renew_lease(key, lease = nil)
-        raise ArgumentError, 'Key must be a string' unless key.is_a?(String)
+        validate_string(key, 'key must be a string')
 
         blocks = Utils.convert_lease(lease)
-        raise ArgumentError, 'Invalid lease time' if blocks.to_i.negative?
+
+        validate_positive_number(blocks, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
@@ -308,7 +303,7 @@ module Bluzelle
       def renew_lease_all(lease = nil)
         blocks = Utils.convert_lease(lease)
 
-        raise ArgumentError, 'Invalid lease time' if blocks.to_i.negative?
+        validate_positive_number(blocks, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
@@ -325,7 +320,7 @@ module Bluzelle
       #
       # @return [Array]
       def get_n_shortest_lease(n)
-        raise ArgumentError, 'Invalid valid specified' if n.negative?
+        validate_positive_number(n, 'invalid value specified')
 
         @cosmos.query("#{@app_service}/getnshortestlease/#{@uuid}/#{n}")
                .dig('result', 'keyleases')
@@ -338,7 +333,7 @@ module Bluzelle
       #
       # @return [Array]
       def tx_get_n_shortest_lease(n)
-        raise ArgumentError, 'Invalid value specified' if n.negative?
+        validate_positive_number(n, 'invalid value specified')
 
         @cosmos.send_transaction(
           'post',
@@ -366,8 +361,16 @@ module Bluzelle
 
       private
 
+      def validate_array(arg, msg)
+        raise ArgumentError, msg unless arg.is_a?(Array)
+      end
+
       def validate_string(arg, msg)
         raise ArgumentError, msg unless arg.is_a?(String)
+      end
+
+      def validate_positive_number(arg, msg)
+        raise ArgumentError, msg if arg.is_a?(Integer) && arg.negative?
       end
 
       def build_params(params)

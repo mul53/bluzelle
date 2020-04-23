@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 RSpec.describe Bluzelle::Swarm::Client do
@@ -553,15 +555,15 @@ RSpec.describe Bluzelle::Swarm::Client do
 
     it 'should return client version' do
       version_info = {
-          "application": {
-            "name": 'BluzelleService',
-            "server_name": 'blzd',
-            "client_name": 'blzcli',
-            "version": '0.0.0-39-g8895e3e',
-            "commit": '8895e3edf0a3ede0f6ed30f2224930e8faa1236e',
-            "build_tags": 'ledger,faucet,cosmos-sdk v0.38.1',
-            "go": 'go version go1.13.4 linux/amd64'
-          } 
+        "application": {
+          "name": 'BluzelleService',
+          "server_name": 'blzd',
+          "client_name": 'blzcli',
+          "version": '0.0.0-39-g8895e3e',
+          "commit": '8895e3edf0a3ede0f6ed30f2224930e8faa1236e',
+          "build_tags": 'ledger,faucet,cosmos-sdk v0.38.1',
+          "go": 'go version go1.13.4 linux/amd64'
+        }
       }
 
       stub_request(:get, 'http://localhost:1317/node_info')
@@ -578,7 +580,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       .to_return(status: 200, body: JSON.generate({ result: data }), headers: {})
   end
 
-  def initial_request_stub(endpoint, options = {})
+  def initial_request_stub(endpoint, _options = {})
     stub_request(:post, "http://localhost:1317/#{endpoint}")
       .to_return(status: 200, body: JSON.generate(tx_create_skeleton), headers: {})
   end
