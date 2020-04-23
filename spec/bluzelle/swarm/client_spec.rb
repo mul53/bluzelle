@@ -153,6 +153,12 @@ RSpec.describe Bluzelle::Swarm::Client do
       account_request_stub
     end
 
+    it 'should throw error when no values are provided' do
+      expect{
+        client.create
+      }.to raise_error(ArgumentError)
+    end
+
     it 'should throw error when key is not string' do
       non_string_types = [{}, 1, []]
 

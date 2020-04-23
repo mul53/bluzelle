@@ -27,22 +27,29 @@ module Bluzelle
 
       # Create a field in the database
       #
+      # @example
+      #
+      # api.create('key', 'value')
+      #
       # @param [String] key The name of the key to create
       # @param [String] value The string value to set the key
-      # @param [Hash] lease Minimum time for key to remain in database
-      def create(key, value, lease = nil)
-        validate_string(key, 'Key must be a string.')
-        validate_string(value, 'Value must be a string.')
+      # @param [Hash] gas_info Hash containing gas parameters
+      # @param [Hash] lease Minimum time for key to remain in databas
+      #
+      # @return [void]
+      def create(key, value, gas_info = @gas_info, lease_info = nil)
+        validate_string(key, 'key must be a string')
+        validate_string(value, 'value must be a string')
 
-        blocks = Utils.convert_lease(lease)
+        blocks = Utils.convert_lease(lease_info)
 
         validate_positive_number(blocks, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
           'crud/create',
-          build_params({ Key: key, Value: value, Lease: blocks }),
-          @gas_info
+          build_params({ 'Key' => key, 'Value' => value, 'Lease' => blocks }),
+          gas_info
         )
       end
 
