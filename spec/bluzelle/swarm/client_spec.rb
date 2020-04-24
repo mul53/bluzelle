@@ -11,7 +11,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       chain_id: 'bluzelle',
       uuid: '20fc19d4-7c9d-4b5c-9578-8cedd756e0ea',
       gas_info: {
-        max_fee: 400000
+        max_fee: 400_000
       }
     )
   end
@@ -90,7 +90,7 @@ RSpec.describe Bluzelle::Swarm::Client do
         address: client.address,
         mnemonic: client.mnemonic,
         gas_info: {
-          max_fee: 400000
+          max_fee: 400_000
         }
       )
 
@@ -160,9 +160,9 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should throw error when no values are provided' do
-      expect{
+      expect do
         client.create
-      }.to raise_error(ArgumentError)
+      end.to raise_error(ArgumentError)
     end
 
     it 'should throw error when key is not string' do
@@ -198,9 +198,9 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/create', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
       tx_request_stub({ 'error': { 'message': 'key already exists' } }, 400)
 
-      expect{
+      expect do
         client.create('key', 'value')
-      }.to raise_error 'key already exists'
+      end.to raise_error 'key already exists'
     end
   end
 
@@ -243,7 +243,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     it 'should read key' do
       initial_request_stub('crud/read', { 'Key': 'key' })
 
-      tx_request_stub({ 'data': to_hex(to_json_str({'value': 'value'})) })
+      tx_request_stub({ 'data': to_hex(to_json_str({ 'value': 'value' })) })
 
       expect(client.tx_read('key')).to eq('value')
     end
@@ -255,7 +255,9 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should delete key' do
-      initial_request_stub('crud/delete', { 'Key': 'key' })
+      stub_request(:delete, 'http://localhost:1317/crud/delete')
+        .to_return(status: 200, body: JSON.generate(tx_create_skeleton))
+
       stub = tx_request_stub({ has: true })
 
       client.delete('key')
@@ -553,7 +555,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       initial_request_stub('crud/getnshortestlease', { N: '10' })
 
-      tx_request_stub({ 'data': to_hex(to_json_str({ 'keyleases': leases_data }))})
+      tx_request_stub({ 'data': to_hex(to_json_str({ 'keyleases': leases_data })) })
 
       leases = client.tx_get_n_shortest_lease(10)
 
@@ -605,8 +607,8 @@ RSpec.describe Bluzelle::Swarm::Client do
       .to_return(status: 200, body: JSON.generate({ result: data }), headers: {})
   end
 
-  def initial_request_stub(endpoint, _options = {})
-    stub_request(:post, "http://localhost:1317/#{endpoint}")
+  def initial_request_stub(endpoint, options = {})
+    stub_request(options[:method] || :post, "http://localhost:1317/#{endpoint}")
       .to_return(status: 200, body: JSON.generate(tx_create_skeleton), headers: {})
   end
 

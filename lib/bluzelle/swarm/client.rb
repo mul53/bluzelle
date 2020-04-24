@@ -129,15 +129,18 @@ module Bluzelle
 
       # Delete a field from the database
       #
-      # @param [String] key
-      def delete(key)
+      # @param [String] key The name of the key to delete
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
+      # @return [void]
+      def delete(key, gas_info = @gas_info)
         validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
-          'post',
+          'delete',
           'crud/delete',
           build_params({ Key: key }),
-          @gas_info
+          gas_info
         )
       end
 

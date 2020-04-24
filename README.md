@@ -136,12 +136,14 @@ Returns a promise resolving the string value of the key.
 Throws an exception when the key does not exist in the database.
 Throws an exception when the prove is true and the result fails verification.
 
-### tx_read\(key\)
+### tx_read\(key[, gas_info]\)
 
 Retrieve the value of a key via a transaction (i.e. uses consensus).
 
 ```ruby
 value = api.tx_read 'mykey'
+
+value = api.tx_read 'mykey', {max_fee: '400001'}
 ```
 
 | Argument | Description |
@@ -158,6 +160,8 @@ Throws an exception when the key does not exist in the database.
 Update a field in the database.
 
 ```ruby
+api.update 'mykey', { a: 13 }
+
 api.update 'mykey', { a: 13 }, {max_fee: '400001'}, {days: 100}
 ```
 
@@ -172,12 +176,14 @@ Returns a promise resolving to nothing.
 
 Throws an exception when the key doesn't exist, or invalid value.
 
-### delete\(key\)
+### delete\(key[, gas_info]\)
 
 Delete a field from the database.
 
 ```ruby
 api.delete 'mykey'
+
+api.delete 'mykey', {max_fee: '400001'}
 ```
 
 | Argument | Description |
