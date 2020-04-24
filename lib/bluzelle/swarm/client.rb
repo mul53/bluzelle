@@ -147,7 +147,7 @@ module Bluzelle
       # Query to see if a key is in the database. This function bypasses
       # the consensus and cryptography mechanisms in favour of speed.
       #
-      # @param [String] key
+      # @param [String] key The name of the key to query
       #
       # @return [Boolean]
       def has(key)
@@ -159,17 +159,18 @@ module Bluzelle
 
       # Query to see if a key is in the database via a transaction (i.e uses consensus)
       #
-      # @param [String] key
+      # @param [String] key The name of the key to query
+      # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [Boolean]
-      def tx_has(key)
+      def tx_has(key, gas_info = @gas_info)
         validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
           'post',
           'crud/has',
           build_params({ Key: key }),
-          @gas_info
+          gas_info
         ).dig('has')
       end
 
@@ -184,13 +185,15 @@ module Bluzelle
 
       # Retrieve a list of all keys via a transaction (i.e use consensus)
       #
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
       # @return [Array]
-      def tx_keys
+      def tx_keys(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
           'crud/keys',
           build_params({}),
-          @gas_info
+          gas_info
         ).dig('keys') || []
       end
 
@@ -198,7 +201,10 @@ module Bluzelle
       #
       # @param [String] key
       # @param [String] new_key
-      def rename(key, new_key)
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
+      # @return [void]
+      def rename(key, new_key, gas_info = @gas_info)
         validate_string(key, 'key must be a string')
         validate_string(new_key, 'new_key must be a string')
 
@@ -206,7 +212,7 @@ module Bluzelle
           'post',
           'crud/rename',
           build_params({ Key: key, NewKey: new_key }),
-          @gas_info
+          gas_info
         )
       end
 
@@ -214,7 +220,7 @@ module Bluzelle
       # This function bypasses the consensus and cryptography
       # mechanisms in favor of speed
       #
-      # @return [Fixnum]
+      # @return [Integer]
       def count
         @cosmos.query("#{app_service}/count/#{@uuid}")
                .dig('result', 'count')
@@ -222,23 +228,29 @@ module Bluzelle
 
       # Retrieve the number of keys in the current database/uuid via a transaction
       #
-      # @return [Fixnum]
-      def tx_count
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
+      # @return [Integer]
+      def tx_count(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
           'crud/count',
           build_params({}),
-          @gas_info
+          gas_info
         ).dig('count')
       end
 
       # Remove all keys in the current database/uuid
-      def delete_all
+      #
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
+      # @return [void]
+      def delete_all(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
           'crud/deleteall',
           build_params({}),
-          @gas_info
+          gas_info
         )
       end
 
@@ -253,20 +265,23 @@ module Bluzelle
 
       # Enumerate all keys and values in the current database/uuid via a transaction
       #
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
       # @return [Array]
-      def tx_key_values
+      def tx_key_values(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
           'crud/keyvalues',
           build_params({}),
-          @gas_info
+          gas_info
         ).dig('keyvalues') || []
       end
 
       # Update multiple fields in the database
       #
       # @param [Array]
-      def multi_update(key_values)
+      # @param [Hash] gas_info Hash containing gas parameters
+      def multi_update(key_values, gas_info = @gas_info)
         validate_array(key_values, 'key_values must be an array')
 
         key_values.each do |key_value|
@@ -278,7 +293,7 @@ module Bluzelle
           'post',
           'crud/multiupdate',
           build_params({ KeyValues: key_values }),
-          @gas_info
+          gas_info
         )
       end
 
@@ -297,25 +312,27 @@ module Bluzelle
 
       # Retrieve the minimum time remaining on the lease for a key, using a transaction
       #
-      # @param [String] key
+      # @param [String] key The key to retrieve the lease information for
+      # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [String]
-      def tx_get_lease(key)
+      def tx_get_lease(key, gas_info = @gas_info)
         validate_string(key, 'key must be a string')
 
         @cosmos.send_transaction(
           'post',
           'crud/getlease',
           build_params({ Key: key }),
-          @gas_info
+          gas_info
         ).dig('lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
       end
 
       # Update the minimum time remaining on the lease for a key
       #
-      # @param [String] key
-      # @param [Hash] lease
-      def renew_lease(key, lease = nil)
+      # @param [String] key The key to retrieve the lease information for
+      # @param [Hash] gas_info Hash containing gas parameters
+      # @param [Hash] lease Minimum time for key to remain in database
+      def renew_lease(key, gas_info = @gas_info, lease = nil)
         validate_string(key, 'key must be a string')
 
         blocks = Utils.convert_lease(lease)
@@ -326,14 +343,15 @@ module Bluzelle
           'post',
           'crud/renewlease',
           build_params({ Key: key, Lease: blocks }),
-          @gas_info
+          gas_info
         )
       end
 
       # Update the minimum time remaining on the lease for all keys
       #
-      # @param [Hash] lease
-      def renew_lease_all(lease = nil)
+      # @param [Hash] gas_info Hash containing gas parameters
+      # @param [Hash] lease Minimum time for key to remain in database
+      def renew_lease_all(gas_info = @gas_info, lease = nil)
         blocks = Utils.convert_lease(lease)
 
         validate_positive_number(blocks, 'invalid lease time')
@@ -342,14 +360,14 @@ module Bluzelle
           'post',
           'crud/renewleaseall',
           build_params({ Lease: blocks }),
-          @gas_info
+          gas_info
         )
       end
 
       # Retrieve a list of the n keys in the database with the shortest leases.
       # This function bypasses the consensus and cryptography mechanisms in favor of speed
       #
-      # @param [Fixnum] n
+      # @param [Integer] n The number of keys to retrieve the lease information for
       #
       # @return [Array]
       def get_n_shortest_lease(n)
@@ -362,17 +380,18 @@ module Bluzelle
       # Retrieve a list of the N keys/values in the database with the shortest leases,
       # using a transaction
       #
-      # @param [Fixnum] n
+      # @param [Integer] n The number of keys to retrieve the lease information for
+      # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [Array]
-      def tx_get_n_shortest_lease(n)
+      def tx_get_n_shortest_lease(n, gas_info = @gas_info)
         validate_positive_number(n, 'invalid value specified')
 
         @cosmos.send_transaction(
           'post',
           'crud/getnshortestlease',
           build_params({ N: n }),
-          @gas_info
+          gas_info
         ).dig('keyleases')
       end
 

@@ -210,12 +210,14 @@ hasMyKey = api.has 'mykey'
 
 Returns a promise resolving to a boolean value - `true` or `false`, representing whether the key is in the database.
 
-### tx_has\(key\)
+### tx_has\(key[, gas_info]\)
 
 Query to see if a key is in the database via a transaction (i.e. uses consensus).
 
 ```ruby
 hasMyKey = api.tx_has 'mykey'
+
+hasMyKey = api.tx_has 'mykey', {gas_price: 10}
 ```
 
 | Argument | Description |
@@ -235,12 +237,14 @@ keys = api.keys
 
 Returns a promise resolving to an array of strings. ex. `["key1", "key2", ...]`.
 
-### tx_keys\(\)
+### tx_keys\([gas_info]\)
 
 Retrieve a list of all keys via a transaction (i.e. uses consensus).
 
 ```ruby
 keys = api.tx_keys
+
+keys = api.tx_keys { gas_price: 10 }
 ```
 
 | Argument | Description |
@@ -249,12 +253,14 @@ keys = api.tx_keys
 
 Returns a promise resolving to an array of strings. ex. `["key1", "key2", ...]`.
 
-### rename\(key, new_key\)
+### rename\(key, new_key[, gas_info]\)
 
 Change the name of an existing key.
 
 ```ruby
 api.rename "key", "newkey"
+
+api.rename 'key', 'newkey', {gas_price: 10}
 ```
 
 | Argument | Description |
@@ -284,12 +290,14 @@ number = api.count
 
 Returns a promise resolving to an integer value.
 
-### tx_count\(\)
+### tx_count\([gas_info]\)
 
 Retrieve the number of keys in the current database/uuid via a transaction.
 
 ```ruby
 number = api.tx_count
+
+number = api.tx_count {gas_price: 10}
 ```
 
 | Argument | Description |
@@ -298,12 +306,14 @@ number = api.tx_count
 
 Returns a promise resolving to an integer value.
 
-### delete_all\(\)
+### delete_all\([gas_info]\)
 
 Remove all keys in the current database/uuid.
 
 ```ruby
 api.delete_all
+
+api.delete_all {gas_price: 10}
 ```
 
 | Argument | Description |
@@ -326,12 +336,14 @@ Returns a promise resolving to a JSON array containing key/value pairs, e.g.
 [{"key": "key1", "value": "value1"}, {"key": "key2", "value": "value2"}]
 ```
 
-### tx_key_values\(\)
+### tx_key_values\([gas_info]\)
 
 Enumerate all keys and values in the current database/uuid via a transaction.
 
 ```ruby
 kvs = api.tx_key_values
+
+kvs = api.tx_key_values {gas_price: 10}
 ```
 
 | Argument | Description |
@@ -344,11 +356,13 @@ Returns a promise resolving to a JSON array containing key/value pairs, e.g.
 [{"key": "key1", "value": "value1"}, {"key": "key2", "value": "value2"}]
 ```
 
-### multi_update\(key_values\)
+### multi_update\(key_values[, gas_info]\)
 
 Update multiple fields in the database.
 
 ```ruby
+api.multi_update([{key: "key1", value: "value1"}, {key: "key2", value: "value2"})
+
 api.multi_update([{key: "key1", value: "value1"}, {key: "key2", value: "value2"}, {gas_price: 10})
 ```
 
@@ -378,12 +392,14 @@ Returns a promise resolving the minimum length of time remaining for the key's l
 
 Throws an exception when the key does not exist in the database.
 
-### tx_get_lease\(key\)
+### tx_get_lease\(key[, gas_info]\)
 
 Retrieve the minimum time remaining on the lease for a key, using a transaction.
 
 ```ruby
-value = api.tx_get_lease('mykey', {gas_price: 10})
+value = api.tx_get_lease 'mykey'
+
+value = api.tx_get_lease 'mykey', {gas_price: 10}
 ```
 
 | Argument | Description |
@@ -395,12 +411,14 @@ Returns a promise resolving the minimum length of time remaining for the key's l
 
 Throws an exception when the key does not exist in the database.
 
-### renew_lease\(key[, lease_info]\)
+### renew_lease\(key[gas_info, lease_info]\)
 
 Update the minimum time remaining on the lease for a key.
 
 ```ruby
-value = api.renew_lease('mykey', { days: 100 });
+value = api.renew_lease 'mykey'
+
+value = api.renew_lease 'mykey', {max_fee: '400001'}, { days: 100 }
 ```
 
 | Argument | Description |
@@ -414,12 +432,14 @@ Returns a promise resolving the minimum length of time remaining for the key's l
 Throws an exception when the key does not exist in the database.
 
 
-### renew_lease_all\(lease_info\)
+### renew_lease_all\([gas_info, lease_info]\)
 
 Update the minimum time remaining on the lease for all keys.
 
 ```ruby
-value = api.renew_lease_all 'myKey', { days: 100 }
+value = api.renew_lease_all
+
+value = api.renew_lease_all {max_fee: '400001'}, { days: 100 }
 ```
 
 | Argument | Description |
@@ -451,13 +471,15 @@ Returns a JSON array of objects containing key, lease (in seconds), e.g.
 [ { key: "mykey", lease: { seconds: "12345" } }, {...}, ...]
 ```
 
-### tx_get_n_shortest_lease\(n\)
+### tx_get_n_shortest_lease\(n[, gas_info]\)
 
 Retrieve a list of the N keys/values in the database with the shortest leases, using a transaction.
  
 ```ruby
 
 keys = api.tx_get_n_shortest_lease 10
+
+keys = api.tx_get_n_shortest_lease 10, {max_fee: '400001'}
 
 ```
 
