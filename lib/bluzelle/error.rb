@@ -9,9 +9,6 @@ module Bluzelle
     end
 
     class ApiError < Error
-      def initialize(msg)
-        super("[Api] #{msg}")
-      end
     end
   end
 end

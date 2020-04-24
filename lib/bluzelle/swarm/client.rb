@@ -11,16 +11,19 @@ module Bluzelle
       # @param options [Hash]
       # @return [Bluzelle::Swarm::Client]
       def initialize(options = {})
-        validate_string(options[:address], 'Address must be a string.')
-        validate_string(options[:mnemonic], 'Mnemonic must be a string.')
+        options = Utils.stringify_keys(options)
 
-        @address = options[:address]
-        @mnemonic = options[:mnemonic]
-        @uuid = options[:uuid] || @address
-        @chain_id = options[:chain_id] || 'bluzelle'
-        @endpoint = options[:endpoint] || 'http://localhost:1317'
+        validate_string(options['address'], 'Address must be a string.')
+        validate_string(options['mnemonic'], 'Mnemonic must be a string.')
+        validate_gas(options['gas_info'])
+
+        @address = options['address']
+        @mnemonic = options['mnemonic']
+        @uuid = options['uuid'] || @address
+        @chain_id = options['chain_id'] || 'bluzelle'
+        @endpoint = options['endpoint'] || 'http://localhost:1317'
         @app_service = 'crud'
-        @gas_info = options[:gas_info]
+        @gas_info = options['gas_info']
 
         @cosmos = Cosmos.new(mnemonic: @mnemonic, endpoint: @endpoint, address: @address, chain_id: @chain_id)
       end
@@ -31,10 +34,12 @@ module Bluzelle
       #
       # api.create('key', 'value')
       #
+      # api.create('key', 'value', { max_fee: 4000000 })
+      #
       # @param [String] key The name of the key to create
       # @param [String] value The string value to set the key
       # @param [Hash] gas_info Hash containing gas parameters
-      # @param [Hash] lease Minimum time for key to remain in databas
+      # @param [Hash] lease_info Minimum time for key to remain in database
       #
       # @return [void]
       def create(key, value, gas_info = @gas_info, lease_info = nil)
@@ -55,14 +60,23 @@ module Bluzelle
 
       # Update a field in the database
       #
-      # @param [String] key
-      # @param [String] value
-      # @param [Hash] lease
-      def update(key, value, lease = nil)
+      # @example
+      #
+      # api.update('key', 'new_value')
+      #
+      # api.update('key', 'new_value', { max_fee: 4000000 })
+      #
+      # @param [String] key The name of the key to update
+      # @param [String] value The string value to set the key
+      # @param [Hash] gas_info Hash containing gas parameters
+      # @param [Hash] lease_info Minimum time for key to remain in database
+      #
+      # @return [void]
+      def update(key, value, gas_info = @gas_info, lease_info = nil)
         validate_string(key, 'Key must be a string')
         validate_string(value, 'Value must be a string')
 
-        blocks = Utils.convert_lease(lease)
+        blocks = Utils.convert_lease(lease_info)
 
         validate_positive_number(blocks, 'invalid lease time')
 
@@ -70,7 +84,7 @@ module Bluzelle
           'post',
           'crud/update',
           build_params({ Key: key, Value: value, Lease: blocks }),
-          @gas_info
+          gas_info
         )
       end
 
@@ -80,7 +94,7 @@ module Bluzelle
       # @param [Boolean] prove
       #
       # @return [String]
-      def read(key, prove)
+      def read(key, prove = false)
         validate_string(key, 'Key must be a string')
 
         url = prove ? "#{@app_service}/pread/#{@uuid}/#{key}" : "#{@app_service}/read/#{@uuid}/#{key}"
@@ -378,6 +392,12 @@ module Bluzelle
 
       def validate_positive_number(arg, msg)
         raise ArgumentError, msg if arg.is_a?(Integer) && arg.negative?
+      end
+
+      def validate_gas(gas)
+        unless gas.is_a?(Hash) && gas.key?('max_fee')
+          raise ArgumentError, 'gas_config: please provide a max_fee value'
+        end
       end
 
       def build_params(params)

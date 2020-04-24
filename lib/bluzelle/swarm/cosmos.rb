@@ -77,7 +77,7 @@ module Bluzelle
 
         if res.dig('code').nil?
           update_sequence
-          res
+          parse_json_str(hex_to_str(res.dig('data'))) if res.key?('data')
         else
           handle_broadcast_error(res.dig('raw_log'), txn)
         end
@@ -162,10 +162,10 @@ module Bluzelle
 
       # Update account sequence
       def update_sequence
-        @account_info[:sequence] = @account_info[:sequence].to_i + 1
+        @account_info['sequence'] = @account_info['sequence'].to_i + 1
       end
 
-      # Sign transaction
+      # Signs a transaction
       #
       # @param txn
       def sign_transaction(txn)
@@ -181,7 +181,7 @@ module Bluzelle
         Utils.to_base64(ecdsa_sign(json_str(payload)))
       end
 
-      # Generates a ECDSA signature
+      # Returns a ECDSA signature
       #
       # @param [Hash] payload
       def ecdsa_sign(payload)
@@ -192,16 +192,28 @@ module Bluzelle
         "#{r}#{s}"
       end
 
-      # Hex encoded private key
+      # Returns a hex encoded private key
       def hex_encoded_private_key
-        [@private_key].pack('H*')
+        hex_to_str(@private_key)
       end
 
-      # Generates a json string from hash
+      # Returns a json string from hash
       #
       # @param [Hash] hash
       def json_str(hash)
         JSON.generate(hash)
+      end
+
+      # Returns a Hash from a json string
+      #
+      # @param [String] str
+      def parse_json_str(str)
+        JSON.parse(str)
+      end
+
+      # Returns a hex encoded string
+      def hex_to_str(hex_str)
+        [hex_str].pack('H*')
       end
 
       # Set fee gas

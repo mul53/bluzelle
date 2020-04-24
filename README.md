@@ -99,12 +99,12 @@ Throws an exception if a response is not received from the connection.
 
 ## Database Functions
 
-### create\(key, value [, lease_info]\)
+### create\(key, value [, gas_info,  lease_info]\)
 
 Create a field in the database.
 
 ```ruby
-api.create 'mykey', '{ a: 13 }', {days: 100};
+api.create 'mykey', '{ a: 13 }', {gax_fee: '400001'}, {days: 100};
 ```
 
 | Argument | Description |
@@ -158,7 +158,7 @@ Throws an exception when the key does not exist in the database.
 Update a field in the database.
 
 ```ruby
-api.update 'mykey', { a: 13 }, {days: 100}
+api.update 'mykey', { a: 13 }, {max_fee: '400001'}, {days: 100}
 ```
 
 | Argument | Description |

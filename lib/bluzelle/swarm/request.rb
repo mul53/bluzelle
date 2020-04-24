@@ -20,18 +20,23 @@ module Bluzelle
           headers: @headers
         )
       rescue RestClient::ExceptionWithResponse => e
-        error(e)
+        case e.http_code
+        when 404, 500
+          raise Error::ApiError, e.response.body
+        else
+          error(e)
+        end
       else
         success(resp)
       end
 
-      def error(e)
-        res = JSON.generate(e.response)
-        error_message = res.dig('error', 'message') if res.is_a?(Hash)
+      private
 
-        if res.is_a?(String)
-          raise Error::ApiError, res
-        elsif res.dig('error', 'message').is_a?(String)
+      def error(err)
+        body = JSON.parse(err.response.body)
+        error_message = body.dig('error', 'message')
+
+        if error_message.is_a?(String)
           raise Error::ApiError, error_message
         else
           raise Error::ApiError, 'error occurred'

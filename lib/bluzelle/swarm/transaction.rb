@@ -16,14 +16,16 @@ module Bluzelle
         @retries_left = 10
       end
 
-      def set_gas(gas_info = nil)
-        if !gas_info.nil? || (gas_info.class == Hash && gas_info.empty?)
-          @gas_price = gas_info[:gas_price].to_i if gas_info.key?(:gas_price)
+      def set_gas(gas_info)
+        return if gas_info.nil? || !gas_info.is_a?(Hash)
 
-          @max_gas = gas_info[:max_gas].to_i if gas_info.key?(:max_gas)
+        gas_info = Utils.stringify_keys(gas_info)
 
-          @max_fee = gas_info[:max_fee].to_i if gas_info.key?(:max_fee)
-        end
+        @gas_price = gas_info['gas_price'].to_i if gas_info.key?('gas_price')
+
+        @max_gas = gas_info['max_gas'].to_i if gas_info.key?('max_gas')
+
+        @max_fee = gas_info['max_fee'].to_i if gas_info.key?('max_fee')
       end
     end
   end

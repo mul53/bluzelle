@@ -111,9 +111,6 @@ module Bluzelle
       (seconds / Constants::BLOCK_TIME_IN_SECONDS).to_s
     end
 
-    # Sorts a hash by key
-    #
-    # @param [Hash] hash
     def sort_hash(hash)
       hash_clone = hash.clone
 
@@ -132,6 +129,20 @@ module Bluzelle
       end
 
       hash_clone.sort.to_h
+    end
+
+    def stringify_keys(hash)
+      res = {}
+  
+      hash.each do |key, value|
+        if value.is_a?(Hash)
+          res[key.to_s] = stringify_keys(value)
+          next
+        end
+        res[key.to_s] = value
+      end
+  
+      res
     end
   end
 end
