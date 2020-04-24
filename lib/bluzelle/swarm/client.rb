@@ -94,10 +94,10 @@ module Bluzelle
       #
       # api.read('key')
       #
-      # @param [String] key
-      # @param [Boolean] prove
+      # @param [String] key The key to retrieve
+      # @param [Boolean] prove 
       #
-      # @return [String]
+      # @return [String] String value of the key
       def read(key, prove = false)
         validate_string(key, 'Key must be a string')
 
@@ -108,17 +108,22 @@ module Bluzelle
 
       # Retrieve the value of a key via a transaction (i.e uses consensus)
       #
-      # @param [String] key
+      # @example
       #
-      # @return [String]
-      def tx_read(key)
+      # api.tx_read('key')
+      #
+      # @param [String] key The key to retrieve
+      # @param [Hash] gas_info Hash containing gas parameters
+      #
+      # @return [String] String value of the key
+      def tx_read(key, gas_info = @gas_info)
         validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
           'post',
           'crud/read',
           build_params({ Key: key }),
-          @gas_info
+          gas_info
         ).dig('value')
       end
 

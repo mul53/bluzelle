@@ -153,7 +153,7 @@ Returns a promise resolving the string value of the key.
 
 Throws an exception when the key does not exist in the database.
 
-### update\(key, value [, lease_info]\)
+### update\(key, value [, gas_info, lease_info]\)
 
 Update a field in the database.
 
