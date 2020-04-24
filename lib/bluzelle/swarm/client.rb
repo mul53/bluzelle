@@ -90,6 +90,10 @@ module Bluzelle
 
       # Retrieve the value of a key without consensus verification
       #
+      # @example
+      #
+      # api.read('key')
+      #
       # @param [String] key
       # @param [Boolean] prove
       #
