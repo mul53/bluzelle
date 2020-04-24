@@ -30,12 +30,6 @@ module Bluzelle
 
       # Create a field in the database
       #
-      # @example
-      #
-      # api.create('key', 'value')
-      #
-      # api.create('key', 'value', { max_fee: 4000000 })
-      #
       # @param [String] key The name of the key to create
       # @param [String] value The string value to set the key
       # @param [Hash] gas_info Hash containing gas parameters
@@ -59,12 +53,6 @@ module Bluzelle
       end
 
       # Update a field in the database
-      #
-      # @example
-      #
-      # api.update('key', 'new_value')
-      #
-      # api.update('key', 'new_value', { max_fee: 4000000 })
       #
       # @param [String] key The name of the key to update
       # @param [String] value The string value to set the key
@@ -90,10 +78,6 @@ module Bluzelle
 
       # Retrieve the value of a key without consensus verification
       #
-      # @example
-      #
-      # api.read('key')
-      #
       # @param [String] key The key to retrieve
       # @param [Boolean] prove 
       #
@@ -107,10 +91,6 @@ module Bluzelle
       end
 
       # Retrieve the value of a key via a transaction (i.e uses consensus)
-      #
-      # @example
-      #
-      # api.tx_read('key')
       #
       # @param [String] key The key to retrieve
       # @param [Hash] gas_info Hash containing gas parameters
@@ -332,7 +312,7 @@ module Bluzelle
       # @param [String] key The key to retrieve the lease information for
       # @param [Hash] gas_info Hash containing gas parameters
       # @param [Hash] lease Minimum time for key to remain in database
-      def renew_lease(key, gas_info = @gas_info, lease = nil)
+      def renew_lease(key, lease = nil, gas_info = @gas_info)
         validate_string(key, 'key must be a string')
 
         blocks = Utils.convert_lease(lease)
@@ -351,7 +331,7 @@ module Bluzelle
       #
       # @param [Hash] gas_info Hash containing gas parameters
       # @param [Hash] lease Minimum time for key to remain in database
-      def renew_lease_all(gas_info = @gas_info, lease = nil)
+      def renew_lease_all(lease = nil, gas_info = @gas_info)
         blocks = Utils.convert_lease(lease)
 
         validate_positive_number(blocks, 'invalid lease time')
@@ -390,7 +370,7 @@ module Bluzelle
         @cosmos.send_transaction(
           'post',
           'crud/getnshortestlease',
-          build_params({ N: n }),
+          build_params({ N: n.to_s }),
           gas_info
         ).dig('keyleases')
       end

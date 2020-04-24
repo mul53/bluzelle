@@ -1,9 +1,5 @@
 require 'bluzelle'
 
-def sep
-  puts '-----------------'
-end
-
 client = Bluzelle::Swarm::Client.new(
   address: 'bluzelle1upsfjftremwgxz3gfy0wf3xgvwpymqx754ssu9',
   mnemonic: 'around buzz diagram captain obtain detail salon mango muffin brother morning jeans display attend knife carry green dwarf vendor hungry fan route pumpkin car',
@@ -15,21 +11,28 @@ client = Bluzelle::Swarm::Client.new(
   }
 )
 
-puts client.version 
+client.version
 # 0.0.0-60-g1b32db7
-sep
 
-puts client.account
-# {"address"=>"bluzelle1upsfjftremwgxz3gfy0wf3xgvwpymqx754ssu9", 
-# "coins"=>[{"denom"=>"ubnt", "amount"=>"1199722793983680"}], 
+client.account
+# {"address"=>"bluzelle1upsfjftremwgxz3gfy0wf3xgvwpymqx754ssu9",
+# "coins"=>[{"denom"=>"ubnt", "amount"=>"1199722793983680"}],
 # "public_key"=>"bluzellepub1addwnpepqwnm94uc0yy338w7l3ghd8en0kg6nvds3h6l8n0wz355nhz35prtufpjsq2", "account_number"=>9, "sequence"=>302}
-sep
 
-puts client.keys
-sep
+client.create 'key', 'value'
 
-puts client.count
-# 0
-sep
-puts client.tx_keys
+client.read 'key'
+# value
 
+client.update 'key', 'new_value'
+
+client.read 'key'
+# new_value
+
+client.read 'key', true
+# new_value
+
+client.keys
+# ['key']
+
+client.delete 'key'
