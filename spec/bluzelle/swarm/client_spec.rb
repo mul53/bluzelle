@@ -224,10 +224,14 @@ RSpec.describe Bluzelle::Swarm::Client do
       account_request_stub
     end
 
-    it 'should read key' do
+    it 'should read key verified' do
       query_request_stub('pread/20fc19d4-7c9d-4b5c-9578-8cedd756e0ea/key', { 'value': 'value' })
-
       expect(client.read('key', true)).to eq('value')
+    end
+
+    it 'should read key unverified' do
+      query_request_stub('read/20fc19d4-7c9d-4b5c-9578-8cedd756e0ea/key', { 'value': 'value' })
+      expect(client.read('key')).to eq('value')
     end
   end
 
