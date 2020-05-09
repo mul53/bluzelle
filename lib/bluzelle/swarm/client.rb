@@ -25,7 +25,10 @@ module Bluzelle
         @app_service = 'crud'
         @gas_info = options['gas_info']
 
-        @cosmos = Cosmos.new(mnemonic: @mnemonic, endpoint: @endpoint, address: @address, chain_id: @chain_id)
+        @cosmos = Cosmos.new(
+          mnemonic: @mnemonic, endpoint: @endpoint,
+          address: @address, chain_id: @chain_id
+        )
       end
 
       # Create a field in the database
@@ -40,14 +43,14 @@ module Bluzelle
         validate_string(key, 'key must be a string')
         validate_string(value, 'value must be a string')
 
-        blocks = Utils.convert_lease(lease_info)
+        lease = Utils.convert_lease(lease_info)
 
-        validate_positive_number(blocks, 'invalid lease time')
+        validate_lease(lease, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
-          'crud/create',
-          build_params({ 'Key' => key, 'Value' => value, 'Lease' => blocks }),
+          "#{@app_service}/create",
+          build_params({ 'Key' => key, 'Value' => value, 'Lease' => lease }),
           gas_info
         )
       end
@@ -64,14 +67,16 @@ module Bluzelle
         validate_string(key, 'Key must be a string')
         validate_string(value, 'Value must be a string')
 
-        blocks = Utils.convert_lease(lease_info)
+        gas_info = @gas_info if gas_info.nil?
 
-        validate_positive_number(blocks, 'invalid lease time')
+        lease = Utils.convert_lease(lease_info)
+
+        validate_lease(lease, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
-          'crud/update',
-          build_params({ Key: key, Value: value, Lease: blocks }),
+          "#{@app_service}/update",
+          build_params({ Key: key, Value: value, Lease: lease }),
           gas_info
         )
       end
@@ -79,13 +84,15 @@ module Bluzelle
       # Retrieve the value of a key without consensus verification
       #
       # @param [String] key The key to retrieve
-      # @param [Boolean] prove 
+      # @param [Boolean] prove
       #
       # @return [String] String value of the key
       def read(key, prove = false)
         validate_string(key, 'Key must be a string')
 
-        url = prove ? "#{@app_service}/pread/#{@uuid}/#{key}" : "#{@app_service}/read/#{@uuid}/#{key}"
+        path = prove ? 'pread' : 'read'
+        url = "#{@app_service}/#{path}/#{@uuid}/#{key}"
+
         @cosmos.query(url)
                .dig('result', 'value')
       end
@@ -101,7 +108,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'crud/read',
+          "#{@app_service}/read",
           build_params({ Key: key }),
           gas_info
         ).dig('value')
@@ -118,7 +125,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'delete',
-          'crud/delete',
+          "#{@app_service}/delete",
           build_params({ Key: key }),
           gas_info
         )
@@ -148,7 +155,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'crud/has',
+          "#{@app_service}/has",
           build_params({ Key: key }),
           gas_info
         ).dig('has')
@@ -171,7 +178,7 @@ module Bluzelle
       def tx_keys(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
-          'crud/keys',
+          "#{@app_service}/keys",
           build_params({}),
           gas_info
         ).dig('keys') || []
@@ -190,7 +197,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'crud/rename',
+          "#{@app_service}/rename",
           build_params({ Key: key, NewKey: new_key }),
           gas_info
         )
@@ -214,7 +221,7 @@ module Bluzelle
       def tx_count(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
-          'crud/count',
+          "#{@app_service}/count",
           build_params({}),
           gas_info
         ).dig('count')
@@ -228,7 +235,7 @@ module Bluzelle
       def delete_all(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
-          'crud/deleteall',
+          "#{@app_service}/deleteall",
           build_params({}),
           gas_info
         )
@@ -251,7 +258,7 @@ module Bluzelle
       def tx_key_values(gas_info = @gas_info)
         @cosmos.send_transaction(
           'post',
-          'crud/keyvalues',
+          "#{@app_service}/keyvalues",
           build_params({}),
           gas_info
         ).dig('keyvalues') || []
@@ -271,7 +278,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'crud/multiupdate',
+          "#{@app_service}/multiupdate",
           build_params({ KeyValues: key_values }),
           gas_info
         )
@@ -301,7 +308,7 @@ module Bluzelle
 
         @cosmos.send_transaction(
           'post',
-          'crud/getlease',
+          "#{@app_service}/getlease",
           build_params({ Key: key }),
           gas_info
         ).dig('lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
@@ -315,14 +322,14 @@ module Bluzelle
       def renew_lease(key, lease = nil, gas_info = @gas_info)
         validate_string(key, 'key must be a string')
 
-        blocks = Utils.convert_lease(lease)
+        lease = Utils.convert_lease(lease)
 
-        validate_positive_number(blocks, 'invalid lease time')
+        validate_lease(lease, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
-          'crud/renewlease',
-          build_params({ Key: key, Lease: blocks }),
+          "#{@app_service}/renewlease",
+          build_params({ Key: key, Lease: lease }),
           gas_info
         )
       end
@@ -332,14 +339,14 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       # @param [Hash] lease Minimum time for key to remain in database
       def renew_lease_all(lease = nil, gas_info = @gas_info)
-        blocks = Utils.convert_lease(lease)
+        lease = Utils.convert_lease(lease)
 
-        validate_positive_number(blocks, 'invalid lease time')
+        validate_lease(lease, 'invalid lease time')
 
         @cosmos.send_transaction(
           'post',
-          'crud/renewleaseall',
-          build_params({ Lease: blocks }),
+          "#{@app_service}/renewleaseall",
+          build_params({ Lease: lease }),
           gas_info
         )
       end
@@ -351,7 +358,7 @@ module Bluzelle
       #
       # @return [Array]
       def get_n_shortest_lease(n)
-        validate_positive_number(n, 'invalid value specified')
+        validate_lease(n, 'invalid value specified')
 
         @cosmos.query("#{@app_service}/getnshortestlease/#{@uuid}/#{n}")
                .dig('result', 'keyleases')
@@ -361,15 +368,17 @@ module Bluzelle
       # using a transaction
       #
       # @param [Integer] n The number of keys to retrieve the lease information for
-      # @param [Hash] gas_info Hash containing gas parameters
+      # @param [Hash] gas_info Hash containing lize(options = {})gas parameters
       #
       # @return [Array]
       def tx_get_n_shortest_lease(n, gas_info = @gas_info)
-        validate_positive_number(n, 'invalid value specified')
+        validate_lease(n, 'invalid value specified')
+
+        # TODO: work on n parameter
 
         @cosmos.send_transaction(
           'post',
-          'crud/getnshortestlease',
+          "#{@app_service}/getnshortestlease",
           build_params({ N: n.to_s }),
           gas_info
         ).dig('keyleases')
@@ -401,7 +410,7 @@ module Bluzelle
         raise ArgumentError, msg unless arg.is_a?(String)
       end
 
-      def validate_positive_number(arg, msg)
+      def validate_lease(arg, msg)
         raise ArgumentError, msg if arg.is_a?(Integer) && arg.negative?
       end
 

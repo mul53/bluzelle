@@ -342,9 +342,9 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
 
     it 'should return count' do
-      query_request_stub('count/20fc19d4-7c9d-4b5c-9578-8cedd756e0ea', { 'count': '10' })
+      query_request_stub('count/20fc19d4-7c9d-4b5c-9578-8cedd756e0ea', { 'count': 10 })
 
-      expect(client.count).to eq('10')
+      expect(client.count).to eq(10)
     end
   end
 
@@ -598,6 +598,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       version = client.version
 
+      # FIXME: Fix test
       expect(version).to eq(version_info[:version])
     end
   end

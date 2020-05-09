@@ -23,8 +23,7 @@ module Bluzelle
       end
 
       def query(endpoint)
-        Request.new('get', "#{@endpoint}/#{endpoint}")
-               .execute
+        Request.execute(method: 'get', url: "#{@endpoint}/#{endpoint}")
       end
 
       def send_transaction(method, endpoint, data, gas_info)
@@ -62,7 +61,7 @@ module Bluzelle
       # Account query
       def fetch_account
         url = "#{@endpoint}/auth/accounts/#{@address}"
-        res = Request.new('get', url).execute
+        res = Request.execute(method: 'get', url: url)
 
         update_account_details(res.dig('result', 'value'))
       end
@@ -73,7 +72,7 @@ module Bluzelle
       def broadcast_transaction(txn)
         url = "#{@endpoint}/#{txn.endpoint}"
         payload = { 'mode' => 'block', 'tx' => txn.data }
-        res = Request.new(txn.method, url, payload).execute
+        res = Request.execute(method: txn.method, url: url, payload: payload)
 
         if res.dig('code').nil?
           update_sequence
@@ -97,7 +96,14 @@ module Bluzelle
       # Fetch transaction skeleton
       def fetch_txn_skeleton(txn)
         url = "#{@endpoint}/#{txn.endpoint}"
-        data = Request.new(txn.method, url, txn.data, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }).execute
+
+        data = Request.execute(
+          method: txn.method,
+          url: url,
+          payload: txn.data,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        )
+
         data['value']
       end
 
@@ -185,12 +191,15 @@ module Bluzelle
       #
       # @param [Hash] payload
       def ecdsa_sign(payload)
+        # TODO: Change method of signature retrival
         pk = Secp256k1::PrivateKey.new(privkey: hex_encoded_private_key, raw: true)
         rs = pk.ecdsa_sign(payload)
         r = rs.slice(0, 32).read_string.reverse
         s = rs.slice(32, 32).read_string.reverse
         "#{r}#{s}"
       end
+
+      # TODO: Move Utility functions to utility module
 
       # Returns a hex encoded private key
       def hex_encoded_private_key

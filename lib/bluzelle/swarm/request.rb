@@ -5,46 +5,45 @@ require 'rest-client'
 module Bluzelle
   module Swarm
     class Request
-      def initialize(method, url, payload = {}, options = {})
-        @method = method
-        @url = url
-        @payload = JSON.generate(payload)
-        @headers = options.dig(:headers)
-      end
-
-      def execute
-        resp = RestClient::Request.execute(
-          method: @method,
-          url: @url,
-          payload: @payload,
-          headers: @headers
-        )
-      rescue RestClient::ExceptionWithResponse => e
-        case e.http_code
-        when 404, 500
-          raise Error::ApiError, e.response.body
+      class << self
+        def execute(options = {})
+          resp = RestClient::Request.execute(parse_options(options))
+        rescue RestClient::ExceptionWithResponse => e
+          case e.http_code
+          when 404, 500
+            raise Error::ApiError, e.response.body
+          else
+            error(e)
+          end
         else
-          error(e)
+          success(resp)
         end
-      else
-        success(resp)
-      end
 
-      private
+        private
 
-      def error(err)
-        body = JSON.parse(err.response.body)
-        error_message = body.dig('error', 'message')
-
-        if error_message.is_a?(String)
-          raise Error::ApiError, error_message
-        else
-          raise Error::ApiError, 'error occurred'
+        def parse_options(options = {})
+          {
+            method: options[:method],
+            url: options[:url],
+            payload: JSON.generate(options[:payload]),
+            headers: options[:headers]
+          }
         end
-      end
 
-      def success(resp)
-        JSON.parse(resp.body)
+        def error(err)
+          body = JSON.parse(err.response.body)
+          error_message = body.dig('error', 'message')
+
+          if error_message.is_a?(String)
+            raise Error::ApiError, error_message
+          else
+            raise Error::ApiError, 'error occurred'
+          end
+        end
+
+        def success(resp)
+          JSON.parse(resp.body)
+        end
       end
     end
   end
