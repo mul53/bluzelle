@@ -2,7 +2,6 @@
 
 require 'rest-client'
 require 'json'
-require 'secp256k1'
 require 'bluzelle/utils'
 require 'bluzelle/constants'
 
@@ -24,7 +23,7 @@ module Bluzelle
 
         validate_address
 
-        fetch_account
+        account
       end
 
       def query(endpoint)
@@ -64,11 +63,11 @@ module Bluzelle
       private
 
       # Account query
-      def fetch_account
+      def account
         url = "#{@endpoint}/auth/accounts/#{@address}"
         res = Request.execute(method: 'get', url: url)
 
-        update_account_details(res.dig('result', 'value'))
+        set_account_details(res.dig('result', 'value'))
       end
 
       # Broadcasts a transaction
@@ -81,7 +80,7 @@ module Bluzelle
 
         if res.dig('code').nil?
           update_sequence
-          parse_json_str(hex_to_str(res.dig('data'))) if res.key?('data')
+          decode_json(hex_to_bin(res.dig('data'))) if res.key?('data')
         else
           handle_broadcast_error(res.dig('raw_log'), txn)
         end
@@ -134,7 +133,7 @@ module Bluzelle
       # Updates account details
       #
       # @param [Hash] data
-      def update_account_details(data)
+      def set_account_details(data)
         account_number = data.dig('account_number')
         sequence = data.dig('sequence')
 
@@ -189,48 +188,9 @@ module Bluzelle
           'sequence' => @account_info['sequence'].to_s
         }
 
-        to_base64(ecdsa_sign(json_str(payload)))
+        to_base64(ecdsa_sign(encode_json(payload), @private_key))
       end
 
-      # Returns a ECDSA signature
-      #
-      # @param [Hash] payload
-      def ecdsa_sign(payload)
-        # TODO: Change method of signature retrival
-        pk = Secp256k1::PrivateKey.new(privkey: hex_encoded_private_key, raw: true)
-        rs = pk.ecdsa_sign(payload)
-        r = rs.slice(0, 32).read_string.reverse
-        s = rs.slice(32, 32).read_string.reverse
-        "#{r}#{s}"
-      end
-
-      # TODO: Move Utility functions to utility module
-
-      # Returns a hex encoded private key
-      def hex_encoded_private_key
-        hex_to_str(@private_key)
-      end
-
-      # Returns a json string from hash
-      #
-      # @param [Hash] hash
-      def json_str(hash)
-        JSON.generate(hash)
-      end
-
-      # Returns a Hash from a json string
-      #
-      # @param [String] str
-      def parse_json_str(str)
-        JSON.parse(str)
-      end
-
-      # Returns a hex encoded string
-      def hex_to_str(hex_str)
-        [hex_str].pack('H*')
-      end
-
-      # Set fee gas
       def update_gas(txn, data)
         res = data.clone
 
@@ -241,7 +201,6 @@ module Bluzelle
         res
       end
 
-      # Set fee amount
       def update_fee_amount(txn, data)
         res = data.clone
 

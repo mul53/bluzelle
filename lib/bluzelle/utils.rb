@@ -4,6 +4,7 @@ require 'money-tree'
 require 'digest'
 require 'openssl'
 require 'base64'
+require 'secp256k1'
 
 module Bluzelle
   module Utils
@@ -143,6 +144,26 @@ module Bluzelle
       end
   
       res
+    end
+
+    def ecdsa_sign(payload, private_key)
+      pk = Secp256k1::PrivateKey.new(privkey: hex_to_bin(private_key), raw: true)
+      rs = pk.ecdsa_sign(payload)
+      r = rs.slice(0, 32).read_string.reverse
+      s = rs.slice(32, 32).read_string.reverse
+      "#{r}#{s}"
+    end
+
+    def encode_json(obj)
+      JSON.generate(obj)
+    end
+
+    def decode_json(str)
+      JSON.parse(str)
+    end
+
+    def hex_to_bin(hex_str)
+      [hex_str].pack('H*')
     end
   end
 end
