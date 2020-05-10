@@ -3,10 +3,15 @@
 require 'rest-client'
 require 'json'
 require 'secp256k1'
+require 'bluzelle/utils'
+require 'bluzelle/constants'
 
 module Bluzelle
   module Swarm
     class Cosmos
+      include Bluzelle::Constants
+      include Bluzelle::Utils
+
       attr_reader :mnemonic, :endpoint, :address, :chain_id
       attr_accessor :account_info
 
@@ -38,22 +43,22 @@ module Bluzelle
         # set memo
         skeleton = update_memo(skeleton)
         # sort
-        skeleton = Utils.sort_hash(skeleton)
+        skeleton = sort_hash(skeleton)
 
         # sign txn
         skeleton['signatures'] = [{
           'account_number' => @account_info['account_number'].to_s,
           'pub_key' => {
             'type' => 'tendermint/PubKeySecp256k1',
-            'value' => Utils.to_base64(
-              [Utils.compressed_pub_key(Utils.open_key(@private_key))].pack('H*')
+            'value' => to_base64(
+              [compressed_pub_key(open_key(@private_key))].pack('H*')
             )
           },
           'sequence' => @account_info['sequence'].to_s,
           'signature' => sign_transaction(skeleton)
         }]
 
-        broadcast_transaction(Transaction.new('post', Constants::TX_COMMAND, skeleton))
+        broadcast_transaction(Transaction.new('post', TX_COMMAND, skeleton))
       end
 
       private
@@ -109,10 +114,10 @@ module Bluzelle
 
       # Check if address and mnemonic are valid
       def validate_address
-        priv_key = Utils.get_ec_private_key(@mnemonic)
-        pub_key = Utils.get_ec_public_key_from_priv(priv_key)
+        priv_key = get_ec_private_key(@mnemonic)
+        pub_key = get_ec_public_key_from_priv(priv_key)
 
-        if Utils.get_address(pub_key) != @address
+        if get_address(pub_key) != @address
           raise ArgumentError, 'Bad credentials - verify your address and mnemonic'
         end
 
@@ -149,7 +154,7 @@ module Bluzelle
       def retry_broadcast(txn)
         txn.retries_left -= 1
 
-        sleep Constants::BROADCAST_RETRY_SECONDS
+        sleep BROADCAST_RETRY_SECONDS
 
         broadcast_transaction(txn)
       end
@@ -184,7 +189,7 @@ module Bluzelle
           'sequence' => @account_info['sequence'].to_s
         }
 
-        Utils.to_base64(ecdsa_sign(json_str(payload)))
+        to_base64(ecdsa_sign(json_str(payload)))
       end
 
       # Returns a ECDSA signature
@@ -242,12 +247,12 @@ module Bluzelle
 
         if !txn.max_fee.nil?
           res['fee']['amount'] = [{
-            'denom': Constants::TOKEN_NAME.to_s,
+            'denom': TOKEN_NAME,
             'amount': txn.max_fee.to_s
           }]
         elsif !txn.gas_price.nil?
           res['fee']['amount'] = [{
-            'denom': Constants::TOKEN_NAME.to_s,
+            'denom': TOKEN_NAME,
             'amount': (res['fee']['gas'] * txn.gas_price).to_s
           }]
         end
@@ -256,7 +261,7 @@ module Bluzelle
       end
 
       def update_memo(txn)
-        txn['memo'] = Utils.make_random_string
+        txn['memo'] = make_random_string
         txn
       end
     end
