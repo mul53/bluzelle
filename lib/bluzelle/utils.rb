@@ -179,7 +179,7 @@ module Bluzelle
       end
 
       offset2 = str.index(': ', offset1 + 1)
-      str.slice(offset1 + 2, offset2)
+      str[(offset1 + 2)..(offset2 - 1)]
     end
   end
 end
