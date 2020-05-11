@@ -166,7 +166,7 @@ module Bluzelle
         if raw_log.include?('signature verification failed')
           update_account_sequence(txn)
         else
-          raise Error::ApiError, raw_log
+          raise Error::ApiError, extract_error_message(raw_log)
         end
       end
 

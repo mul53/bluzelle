@@ -134,7 +134,7 @@ module Bluzelle
 
     def stringify_keys(hash)
       res = {}
-  
+
       hash.each do |key, value|
         if value.is_a?(Hash)
           res[key.to_s] = stringify_keys(value)
@@ -142,7 +142,7 @@ module Bluzelle
         end
         res[key.to_s] = value
       end
-  
+
       res
     end
 
@@ -164,6 +164,22 @@ module Bluzelle
 
     def hex_to_bin(hex_str)
       [hex_str].pack('H*')
+    end
+
+    def extract_error_message(str)
+      offset1 = str.index(': ')
+
+      return str if offset1.nil?
+
+      prefix = str.slice(0, offset1)
+
+      case prefix
+      when 'insufficient fee'
+        return str.slice(offset1 + 2, str.length)
+      end
+
+      offset2 = str.index(': ', offset1 + 1)
+      str.slice(offset1 + 2, offset2)
     end
   end
 end
