@@ -39,23 +39,9 @@ module Bluzelle
         # set gas
         skeleton = update_gas(txn, skeleton)
         skeleton = update_fee_amount(txn, skeleton)
-        # set memo
-        skeleton = update_memo(skeleton)
+
         # sort
         skeleton = sort_hash(skeleton)
-
-        # sign txn
-        skeleton['signatures'] = [{
-          'account_number' => @account_info['account_number'].to_s,
-          'pub_key' => {
-            'type' => 'tendermint/PubKeySecp256k1',
-            'value' => to_base64(
-              [compressed_pub_key(open_key(@private_key))].pack('H*')
-            )
-          },
-          'sequence' => @account_info['sequence'].to_s,
-          'signature' => sign_transaction(skeleton)
-        }]
 
         broadcast_transaction(Transaction.new('post', TX_COMMAND, skeleton))
       end
@@ -74,8 +60,23 @@ module Bluzelle
       #
       # @param [Bluzelle::Swarm::Transaction] txn
       def broadcast_transaction(txn)
+        txn.data['memo'] = make_random_string
+
+        txn.data['signatures'] = [{
+          'account_number' => @account_info['account_number'].to_s,
+          'pub_key' => {
+            'type' => 'tendermint/PubKeySecp256k1',
+            'value' => to_base64(
+              [compressed_pub_key(open_key(@private_key))].pack('H*')
+            )
+          },
+          'sequence' => @account_info['sequence'].to_s,
+          'signature' => sign_transaction(txn.data)
+        }]
+
         url = "#{@endpoint}/#{txn.endpoint}"
         payload = { 'mode' => 'block', 'tx' => txn.data }
+
         res = Request.execute(method: txn.method, url: url, payload: payload)
 
         if res.dig('code').nil?
