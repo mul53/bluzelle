@@ -12,139 +12,142 @@ gas_info = {
   max_fee: '4000001'
 }
 
-puts '#version'
+puts "\n#version"
 puts client.version
 
-puts '#account'
+puts "\n#account"
 puts client.account
 
-puts '#create'
+puts "\n#delete_all"
+client.delete_all gas_info
+
+puts "\n#create"
 puts 'creating key=db, value=redis'
 client.create 'db', 'redis', gas_info
 puts 'creating key=fs, value=ipfs'
 client.create 'fs', 'ipfs', gas_info
 
-puts '#read'
+puts "\n#read"
 puts 'reading key=db'
 puts "value=#{client.read 'db'}"
 puts 'reading key=fs'
 puts "value=#{client.read 'fs'}"
 
-puts '#tx_read'
+puts "\n#tx_read"
 puts 'reading key=db'
 puts "value = #{client.tx_read 'db', gas_info}"
 
-puts '#update'
+puts "\n#update"
 puts 'updating key=db, value=bluzelle'
 client.update 'db', 'bluzelle', gas_info
 
-puts '#read'
+puts "\n#read"
 puts 'reading key=db'
 puts "value=#{client.read 'db'}"
 
-puts '#has'
+puts "\n#has"
 puts 'has key=db'
 puts client.has 'db'
 
-puts '#tx_has'
+puts "\n#tx_has"
 puts 'has key=db'
 puts client.tx_has 'db', gas_info
 
-puts '#keys'
+puts "\n#keys"
 puts 'getting all keys'
 puts client.keys
 
-puts '#tx_keys'
+puts "\n#tx_keys"
 puts 'getting all keys'
-puts client.keys gas_info
+puts client.tx_keys gas_info
 
-puts '#rename'
+puts "\n#rename"
 puts 'rename key=db to key=database'
 client.rename 'db', 'database', gas_info
 
-puts '#count'
+puts "\n#count"
 puts 'number of keys'
 puts client.count
 
-puts '#tx_count'
+puts "\n#tx_count"
 puts 'number of keys'
 puts client.tx_count gas_info
 
-puts '#key_values'
+puts "\n#key_values"
 puts 'getting all keys and values'
 puts client.key_values
 
-puts '#tx_key_values'
+puts "\n#tx_key_values"
 puts 'getting all keys and values'
 puts client.tx_key_values gas_info
 
-puts '#multi_update'
+puts "\n#multi_update"
 puts 'update key=database, value=mongodb | key=fs, value=unix'
 puts client.multi_update([
-                           { 'Key' => 'db', 'Value' => 'mongodb' },
-                           { 'Key' => 'fs', 'Value' => 'unix' }
+                           { 'key' => 'database', 'value' => 'mongodb' },
+                           { 'key' => 'fs', 'value' => 'unix' }
                          ], gas_info)
 
-puts '#key_values'
+puts "\n#key_values"
 puts 'getting all keys and values'
 puts client.key_values
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=database'
 puts client.get_lease 'database'
 
-puts '#tx_get_lease'
+puts "\n#tx_get_lease"
 puts 'lease key=database'
 puts client.tx_get_lease 'database', gas_info
 
-puts '#renew_lease'
+puts "\n#renew_lease"
 puts 'renew key=database, lease=1day'
 client.renew_lease 'database', { 'days': 1 }, gas_info
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=database'
 puts client.get_lease 'database'
 
-puts '#renew_lease'
+puts "\n#renew_lease"
 puts 'renew key=database, lease=1week'
 client.renew_lease 'database', { 'days': 7 }, gas_info
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=database'
 puts client.get_lease 'database'
 
-puts '#renew_lease'
+puts "\n#renew_lease"
 puts 'renew key=database, lease=1month'
 client.renew_lease 'database', { 'days': 30 }, gas_info
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=database'
 puts client.get_lease 'database'
 
-puts '#renew_lease'
+puts "\n#renew_lease"
 puts 'renew key=database, lease=1year'
 client.renew_lease 'database', { 'days': 365 }, gas_info
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=database'
 puts client.get_lease 'database'
 
-puts '#renew_all_lease'
+puts "\n#renew_all_lease"
 puts 'renew all lease=7days'
 client.renew_lease_all({ 'days': 7 }, gas_info)
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=database'
 puts client.get_lease 'database'
 
-puts '#get_lease'
+puts "\n#get_lease"
 puts 'lease key=fs'
 puts client.get_lease 'fs'
 
-puts '#get_n_shortest_leases'
+puts "\n#get_n_shortest_leases"
 puts 'get n leases'
 puts client.get_n_shortest_leases 10
 
-puts '#tx_get_n_shortest_leases'
+puts "\n#tx_get_n_shortest_leases"
 puts 'get n leases'
 puts client.tx_get_n_shortest_leases 10, gas_info

@@ -60,6 +60,8 @@ module Bluzelle
       #
       # @param [Bluzelle::Swarm::Transaction] txn
       def broadcast_transaction(txn)
+        account
+
         txn.data['memo'] = make_random_string
 
         txn.data['signatures'] = [{
