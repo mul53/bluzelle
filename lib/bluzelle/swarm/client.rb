@@ -1,8 +1,13 @@
 # frozen_string_literal: true
+require 'bluzelle/utils'
+require 'bluzelle/constants'
 
 module Bluzelle
   module Swarm
     class Client
+      include Bluzelle::Constants
+      include Bluzelle::Utils
+
       attr_reader :address, :mnemonic, :uuid, :chain_id, :endpoint, :app_service
       attr_reader :cosmos
 
@@ -11,7 +16,7 @@ module Bluzelle
       # @param options [Hash]
       # @return [Bluzelle::Swarm::Client]
       def initialize(options = {})
-        options = Utils.stringify_keys(options)
+        options = stringify_keys(options)
 
         validate_string(options['mnemonic'], 'Mnemonic must be a string.')
         validate_string(options['uuid'], 'UUID must be a string.')
@@ -43,7 +48,7 @@ module Bluzelle
         validate_string(key, 'key must be a string')
         validate_string(value, 'value must be a string')
 
-        lease = Utils.convert_lease(lease_info)
+        lease = convert_lease(lease_info)
 
         validate_lease(lease, 'invalid lease time')
 
@@ -69,7 +74,7 @@ module Bluzelle
 
         gas_info = @gas_info if gas_info.nil?
 
-        lease = Utils.convert_lease(lease_info)
+        lease = convert_lease(lease_info)
 
         validate_lease(lease, 'invalid lease time')
 
@@ -294,7 +299,7 @@ module Bluzelle
         validate_string(key, 'key must be a string')
 
         @cosmos.query("#{@app_service}/getlease/#{@uuid}/#{key}")
-               .dig('result', 'lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
+               .dig('result', 'lease').to_i * BLOCK_TIME_IN_SECONDS
       end
 
       # Retrieve the minimum time remaining on the lease for a key, using a transaction
@@ -311,7 +316,7 @@ module Bluzelle
           "#{@app_service}/getlease",
           build_params({ Key: key }),
           gas_info
-        ).dig('lease').to_i * Constants::BLOCK_TIME_IN_SECONDS
+        ).dig('lease').to_i * BLOCK_TIME_IN_SECONDS
       end
 
       # Update the minimum time remaining on the lease for a key
@@ -322,7 +327,7 @@ module Bluzelle
       def renew_lease(key, lease, gas_info)
         validate_string(key, 'key must be a string')
 
-        lease = Utils.convert_lease(lease)
+        lease = convert_lease(lease)
 
         validate_lease(lease, 'invalid lease time')
 
@@ -339,7 +344,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       # @param [Hash] lease Minimum time for key to remain in database
       def renew_lease_all(lease, gas_info)
-        lease = Utils.convert_lease(lease)
+        lease = convert_lease(lease)
 
         validate_lease(lease, 'invalid lease time')
 
@@ -365,7 +370,7 @@ module Bluzelle
                .map do |key_lease|
           {
             'key' => key_lease['key'],
-            'lease' => key_lease['lease'].to_i * Constants::BLOCK_TIME_IN_SECONDS
+            'lease' => key_lease['lease'].to_i * BLOCK_TIME_IN_SECONDS
           }
         end
       end
@@ -389,7 +394,7 @@ module Bluzelle
                .map do |key_lease|
           {
             'key' => key_lease['key'],
-            'lease' => key_lease['lease'].to_i * Constants::BLOCK_TIME_IN_SECONDS
+            'lease' => key_lease['lease'].to_i * BLOCK_TIME_IN_SECONDS
           }
         end
       end
@@ -422,12 +427,6 @@ module Bluzelle
 
       def validate_lease(arg, msg)
         raise ArgumentError, msg if arg.is_a?(Integer) && arg.negative?
-      end
-
-      def validate_gas(gas)
-        unless gas.is_a?(Hash) && gas.key?('max_fee')
-          raise ArgumentError, 'gas_config: please provide a max_fee value'
-        end
       end
 
       def build_params(params)
