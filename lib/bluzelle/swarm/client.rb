@@ -355,10 +355,10 @@ module Bluzelle
       # @param [Integer] n The number of keys to retrieve the lease information for
       #
       # @return [Array]
-      def get_n_shortest_lease(n)
+      def get_n_shortest_leases(n)
         validate_lease(n, 'invalid value specified')
 
-        @cosmos.query("#{@app_service}/getnshortestlease/#{@uuid}/#{n}")
+        @cosmos.query("#{@app_service}/getnshortestleases/#{@uuid}/#{n}")
                .dig('result', 'keyleases')
       end
 
@@ -369,12 +369,12 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing lize(options = {})gas parameters
       #
       # @return [Array]
-      def tx_get_n_shortest_lease(n, gas_info)
+      def tx_get_n_shortest_leases(n, gas_info)
         validate_lease(n, 'invalid value specified')
 
         @cosmos.send_transaction(
           'post',
-          "#{@app_service}/getnshortestlease",
+          "#{@app_service}/getnshortestleases",
           build_params({ N: n.to_s }),
           gas_info
         ).dig('keyleases')

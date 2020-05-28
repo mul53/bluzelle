@@ -525,7 +525,7 @@ RSpec.describe Bluzelle::Swarm::Client do
     end
   end
 
-  describe '#get_n_shortest_lease' do
+  describe '#get_n_shortest_leases' do
     before do
       account_request_stub
     end
@@ -533,17 +533,17 @@ RSpec.describe Bluzelle::Swarm::Client do
     it 'should get n shortest lease' do
       leases_data = [{ key: 'key1', lease: 100 }, { key: 'key2', lease: 200 }]
       query_request_stub(
-        'getnshortestlease/20fc19d4-7c9d-4b5c-9578-8cedd756e0ea/10',
+        'getnshortestleases/20fc19d4-7c9d-4b5c-9578-8cedd756e0ea/10',
         { 'keyleases': leases_data }
       )
 
-      leases = client.get_n_shortest_lease(10)
+      leases = client.get_n_shortest_leases(10)
 
       expect(leases).not_to be_nil
     end
   end
 
-  describe '#tx_get_n_shortest_lease' do
+  describe '#tx_get_n_shortest_leases' do
     before do
       account_request_stub
     end
@@ -551,11 +551,11 @@ RSpec.describe Bluzelle::Swarm::Client do
     it 'should return shortest lease' do
       leases_data = [{ key: 'key1', lease: 100 }, { key: 'key2', lease: 200 }]
 
-      initial_request_stub('crud/getnshortestlease', { N: '10' })
+      initial_request_stub('crud/getnshortestleases', { N: '10' })
 
       tx_request_stub({ 'data': to_hex(to_json_str({ 'keyleases': leases_data })) })
 
-      leases = client.tx_get_n_shortest_lease(10, gas_info)
+      leases = client.tx_get_n_shortest_leases(10, gas_info)
 
       expect(leases).not_to be_nil
     end
