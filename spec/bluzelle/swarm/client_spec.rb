@@ -91,24 +91,22 @@ RSpec.describe Bluzelle::Swarm::Client do
       account_request_stub
     end
 
-    it 'with default chain_id, endpoint and uuid' do
+    it 'with default chain_id, endpoint' do
       @client = Bluzelle::Swarm::Client.new(
-        address: client.address,
         mnemonic: client.mnemonic,
+        uuid: client.uuid
       )
 
       expect(@client.chain_id).to eq(client.chain_id)
       expect(@client.endpoint).to eq(client.endpoint)
-      expect(@client.uuid).to eq(client.address)
     end
 
-    it 'without address throws error' do
+    it 'without uuid throws error' do
       expect do
         Bluzelle::Swarm::Client.new(
           mnemonic: client.mnemonic,
           endpoint: client.endpoint,
           chain_id: client.chain_id,
-          uuid: client.uuid
         )
       end .to raise_error(ArgumentError)
     end
@@ -124,23 +122,22 @@ RSpec.describe Bluzelle::Swarm::Client do
       end .to raise_error(ArgumentError)
     end
 
-    it 'fails when address is not a string' do
+    it 'fails when uuid is not a string' do
       non_string_types = [{}, 1]
 
       non_string_types.each do |type|
         expect do
           Bluzelle::Swarm::Client.new(
-            address: type,
             mnemonic: client.mnemonic,
             endpoint: client.endpoint,
             chain_id: client.chain_id,
-            uuid: client.uuid
+            uuid: type
           )
         end .to raise_error(ArgumentError)
       end
     end
 
-    it 'fails when mnemonic throws error' do
+    it 'fails when mnemonic is not a string' do
       non_string_types = [{}, 1]
 
       non_string_types.each do |type|

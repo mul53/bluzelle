@@ -92,36 +92,6 @@ RSpec.describe Bluzelle::Swarm::Cosmos do
         )
     end
 
-    it 'should throw error if address is bad' do
-      expect do
-        Bluzelle::Swarm::Cosmos.new(
-          mnemonic: cosmos.mnemonic,
-          endpoint: cosmos.endpoint,
-          address: "#{cosmos.address}x"
-        )
-      end.to raise_error('Bad credentials - verify your address and mnemonic')
-    end
-
-    it 'should throw error if mnemonic is bad' do
-      expect do
-        Bluzelle::Swarm::Cosmos.new(
-          mnemonic: "#{cosmos.mnemonic}x",
-          endpoint: cosmos.endpoint,
-          address: cosmos.address
-        )
-      end.to raise_error('Bad credentials - verify your address and mnemonic')
-    end
-
-    it 'should not throw error if address and mnemonic is valid' do
-      expect do
-        Bluzelle::Swarm::Cosmos.new(
-          mnemonic: cosmos.mnemonic,
-          endpoint: cosmos.endpoint,
-          address: cosmos.address
-        )
-      end.not_to raise_error('Bad credentials - verify your address and mnemonic')
-    end
-
     it 'retrieves account information' do
       api = Bluzelle::Swarm::Cosmos.new(
         mnemonic: cosmos.mnemonic,

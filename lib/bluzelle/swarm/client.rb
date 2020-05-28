@@ -13,20 +13,22 @@ module Bluzelle
       def initialize(options = {})
         options = Utils.stringify_keys(options)
 
-        validate_string(options['address'], 'Address must be a string.')
         validate_string(options['mnemonic'], 'Mnemonic must be a string.')
+        validate_string(options['uuid'], 'UUID must be a string.')
 
-        @address = options['address']
         @mnemonic = options['mnemonic']
-        @uuid = options['uuid'] || @address
+        @uuid = options['uuid']
         @chain_id = options['chain_id'] || 'bluzelle'
         @endpoint = options['endpoint'] || 'http://localhost:1317'
         @app_service = 'crud'
 
         @cosmos = Cosmos.new(
-          mnemonic: @mnemonic, endpoint: @endpoint,
-          address: @address, chain_id: @chain_id
+          mnemonic: @mnemonic, 
+          endpoint: @endpoint,
+          chain_id: @chain_id
         )
+
+        @address = @cosmos.address
       end
 
       # Create a field in the database

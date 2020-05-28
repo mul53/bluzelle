@@ -18,10 +18,10 @@ module Bluzelle
         @mnemonic = options[:mnemonic]
         @chain_id = options[:chain_id]
         @endpoint = options[:endpoint]
-        @address = options[:address]
         @account_info = {}
 
-        validate_address
+        @private_key = get_ec_private_key(@mnemonic)
+        @address = address_from_mnemonic
 
         account
       end
@@ -38,8 +38,6 @@ module Bluzelle
         skeleton = fetch_txn_skeleton(txn)
         # set gas
         skeleton = update_gas(txn, skeleton)
-        skeleton = update_fee_amount(txn, skeleton)
-
         # sort
         skeleton = sort_hash(skeleton)
 
@@ -60,8 +58,6 @@ module Bluzelle
       #
       # @param [Bluzelle::Swarm::Transaction] txn
       def broadcast_transaction(txn)
-        account
-
         txn.data['memo'] = make_random_string
 
         txn.data['signatures'] = [{
@@ -94,6 +90,7 @@ module Bluzelle
       # @param [Bluzelle::Swarm::Transaction] txn
       def update_account_sequence(txn)
         if txn.retries_left != 0
+          account
           retry_broadcast(txn)
         else
           raise Error::ApiError, 'Invalid chain id'
@@ -115,22 +112,9 @@ module Bluzelle
       end
 
       # Check if address and mnemonic are valid
-      def validate_address
-        priv_key = get_ec_private_key(@mnemonic)
-        pub_key = get_ec_public_key_from_priv(priv_key)
-
-        if get_address(pub_key) != @address
-          raise ArgumentError, 'Bad credentials - verify your address and mnemonic'
-        end
-
-        set_private_key(priv_key)
-      end
-
-      # Set private key
-      #
-      # @param [String] key
-      def set_private_key(key)
-        @private_key = key
+      def address_from_mnemonic
+        pub_key = get_ec_public_key_from_priv(@private_key)
+        get_address(pub_key)
       end
 
       # Updates account details
@@ -200,12 +184,6 @@ module Bluzelle
         if res.dig('fee', 'gas').to_i > txn.max_gas && txn.max_gas != 0
           res['fee']['gas'] = txn.max_gas.to_s
         end
-
-        res
-      end
-
-      def update_fee_amount(txn, data)
-        res = data.clone
 
         if !txn.max_fee.nil?
           res['fee']['amount'] = [{
