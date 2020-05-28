@@ -5,7 +5,7 @@ client = Bluzelle::Swarm::Client.new(
   mnemonic: 'around buzz diagram captain obtain detail salon mango muffin brother morning jeans display attend knife carry green dwarf vendor hungry fan route pumpkin car',
   endpoint: 'testnet.public.bluzelle.com:1317',
   chain_id: 'bluzelle',
-  uuid: '20fc19d4-7c9d-4b5c-9578-8cedd756e0ea',
+  uuid: '20fc19d4-7c9d-4b5c-9578-8cedd756e0ea'
 )
 
 gas_info = {
@@ -81,10 +81,9 @@ puts client.tx_key_values gas_info
 puts '#multi_update'
 puts 'update key=database, value=mongodb | key=fs, value=unix'
 puts client.multi_update([
-  { 'Key' => 'db', 'Value' => 'mongodb' },
-  { 'Key' => 'fs', 'Value' => 'unix' }
-  ], gas_info
-)
+                           { 'Key' => 'db', 'Value' => 'mongodb' },
+                           { 'Key' => 'fs', 'Value' => 'unix' }
+                         ], gas_info)
 
 puts '#key_values'
 puts 'getting all keys and values'
@@ -149,4 +148,3 @@ puts client.get_n_shortest_leases 10
 puts '#tx_get_n_shortest_leases'
 puts 'get n leases'
 puts client.tx_get_n_shortest_leases 10, gas_info
-
