@@ -80,6 +80,12 @@ RSpec.describe Bluzelle::Swarm::Client do
     }
   end
 
+  let(:gas_info) do
+    {
+      max_fee: 400_000_001
+    }
+  end
+
   describe '#initialize' do
     before do
       account_request_stub
@@ -89,9 +95,6 @@ RSpec.describe Bluzelle::Swarm::Client do
       @client = Bluzelle::Swarm::Client.new(
         address: client.address,
         mnemonic: client.mnemonic,
-        gas_info: {
-          max_fee: 400_000
-        }
       )
 
       expect(@client.chain_id).to eq(client.chain_id)
@@ -170,7 +173,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       non_string_types.each do |key|
         expect do
-          client.create(key, '{a: 13}')
+          client.create(key, '{a: 13}', gas_info)
         end.to raise_error(ArgumentError)
       end
     end
@@ -180,7 +183,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       non_string_types.each do |value|
         expect do
-          client.create('myKey', value)
+          client.create('myKey', value, gas_info)
         end.to raise_error(ArgumentError)
       end
     end
@@ -189,7 +192,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/create', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
       stub = tx_request_stub({})
 
-      client.create('key', 'value')
+      client.create('key', 'value', gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -199,7 +202,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       tx_request_stub({ 'error': { 'message': 'key already exists' } }, 400)
 
       expect do
-        client.create('key', 'value')
+        client.create('key', 'value', gas_info)
       end.to raise_error 'key already exists'
     end
   end
@@ -213,7 +216,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/update', { 'Key': 'key', 'Value': 'value', 'Lease': '0' })
       stub = tx_request_stub({})
 
-      client.update('key', 'value')
+      client.update('key', 'value', gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -245,7 +248,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       tx_request_stub({ 'data': to_hex(to_json_str({ 'value': 'value' })) })
 
-      expect(client.tx_read('key')).to eq('value')
+      expect(client.tx_read('key', gas_info)).to eq('value')
     end
   end
 
@@ -260,7 +263,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       stub = tx_request_stub({ has: true })
 
-      client.delete('key')
+      client.delete('key', gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -288,7 +291,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       tx_request_stub({ 'data': to_hex(to_json_str({ 'has': true })) })
 
-      expect(client.tx_has('key')).to be_truthy
+      expect(client.tx_has('key', gas_info)).to be_truthy
     end
   end
 
@@ -317,7 +320,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       tx_request_stub({ 'data': to_hex(to_json_str({ 'keys': keys })) })
 
-      expect(client.tx_keys).to include('key1')
+      expect(client.tx_keys(gas_info)).to include('key1')
     end
   end
 
@@ -330,7 +333,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/rename', { 'Key': 'key', 'NewKey': 'new_key' })
       stub = tx_request_stub({})
 
-      client.rename('key', 'new_key')
+      client.rename('key', 'new_key', gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -358,7 +361,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       tx_request_stub({ 'data': to_hex(to_json_str({ 'count': 10 })) })
 
-      expect(client.tx_count).to eq(10)
+      expect(client.tx_count(gas_info)).to eq(10)
     end
   end
 
@@ -371,7 +374,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/deleteall')
       stub = tx_request_stub({})
 
-      client.delete_all
+      client.delete_all(gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -402,7 +405,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       tx_request_stub({ 'data': to_hex(to_json_str(kvs)) })
 
-      expect(client.tx_key_values).not_to be_nil
+      expect(client.tx_key_values(gas_info)).not_to be_nil
     end
   end
 
@@ -416,7 +419,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/multiupdate', { 'KeyValues' => [{ 'key' => 'key1', 'value' => 'value1' }, { 'key' => 'key2', 'value' => 'value2' }] })
       stub = tx_request_stub({})
 
-      client.multi_update(kvs)
+      client.multi_update(kvs, gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -426,7 +429,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       nt_supported.each do |type|
         expect do
-          client.multi_update(type)
+          client.multi_update(type, gas_info)
         end.to raise_error ArgumentError
       end
     end
@@ -461,7 +464,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/getlease', { 'Key': 'key' })
       tx_request_stub({ 'data': to_hex(to_json_str({ 'lease': '20' })) })
 
-      res = client.tx_get_lease('key')
+      res = client.tx_get_lease('key', gas_info)
 
       expect(res).to eq(100)
     end
@@ -482,7 +485,11 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/renewlease', { 'Key': 'key', 'Lease': '36966' })
       stub = tx_request_stub({})
 
-      client.renew_lease('key', { 'days': '2', 'hours': '3', 'minutes': '20', 'seconds': '30' })
+      client.renew_lease(
+        'key',
+        { 'days': '2', 'hours': '3', 'minutes': '20', 'seconds': '30' },
+        gas_info
+      )
 
       expect(stub).to have_been_made.once
     end
@@ -497,7 +504,7 @@ RSpec.describe Bluzelle::Swarm::Client do
       initial_request_stub('crud/renewlease', { 'Key': 'key', 'Lease': '0' })
       stub = tx_request_stub({})
 
-      client.renew_lease('key')
+      client.renew_lease('key', { 'days': 1 }, gas_info)
 
       expect(stub).to have_been_made.once
     end
@@ -508,21 +515,12 @@ RSpec.describe Bluzelle::Swarm::Client do
       account_request_stub
     end
 
-    it 'should renew lease when given no lease' do
-      initial_request_stub('crud/renewleaseall', { 'Lease': '0' })
-      stub = tx_request_stub({})
-
-      client.renew_lease_all
-
-      expect(stub).to have_been_made.once
-    end
-
     it 'should renew lease when given lease object' do
       initial_request_stub('crud/renewleaseall', { 'Lease': '36966' })
 
       stub = tx_request_stub({})
 
-      client.renew_lease_all({ 'days': '2', 'hours': '3', 'minutes': '20', 'seconds': '30' })
+      client.renew_lease_all({ 'days': '2', 'hours': '3', 'minutes': '20', 'seconds': '30' }, gas_info)
       expect(stub).to have_been_made.once
     end
   end
@@ -557,7 +555,7 @@ RSpec.describe Bluzelle::Swarm::Client do
 
       tx_request_stub({ 'data': to_hex(to_json_str({ 'keyleases': leases_data })) })
 
-      leases = client.tx_get_n_shortest_lease(10)
+      leases = client.tx_get_n_shortest_lease(10, gas_info)
 
       expect(leases).not_to be_nil
     end

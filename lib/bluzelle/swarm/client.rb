@@ -15,7 +15,6 @@ module Bluzelle
 
         validate_string(options['address'], 'Address must be a string.')
         validate_string(options['mnemonic'], 'Mnemonic must be a string.')
-        validate_gas(options['gas_info'])
 
         @address = options['address']
         @mnemonic = options['mnemonic']
@@ -23,7 +22,6 @@ module Bluzelle
         @chain_id = options['chain_id'] || 'bluzelle'
         @endpoint = options['endpoint'] || 'http://localhost:1317'
         @app_service = 'crud'
-        @gas_info = options['gas_info']
 
         @cosmos = Cosmos.new(
           mnemonic: @mnemonic, endpoint: @endpoint,
@@ -39,7 +37,7 @@ module Bluzelle
       # @param [Hash] lease_info Minimum time for key to remain in database
       #
       # @return [void]
-      def create(key, value, gas_info = @gas_info, lease_info = nil)
+      def create(key, value, gas_info, lease_info = nil)
         validate_string(key, 'key must be a string')
         validate_string(value, 'value must be a string')
 
@@ -63,7 +61,7 @@ module Bluzelle
       # @param [Hash] lease_info Minimum time for key to remain in database
       #
       # @return [void]
-      def update(key, value, gas_info = @gas_info, lease_info = nil)
+      def update(key, value, gas_info, lease_info = nil)
         validate_string(key, 'Key must be a string')
         validate_string(value, 'Value must be a string')
 
@@ -103,7 +101,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [String] String value of the key
-      def tx_read(key, gas_info = @gas_info)
+      def tx_read(key, gas_info)
         validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
@@ -120,7 +118,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [void]
-      def delete(key, gas_info = @gas_info)
+      def delete(key, gas_info)
         validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
@@ -150,7 +148,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [Boolean]
-      def tx_has(key, gas_info = @gas_info)
+      def tx_has(key, gas_info)
         validate_string(key, 'Key must be a string')
 
         @cosmos.send_transaction(
@@ -175,7 +173,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [Array]
-      def tx_keys(gas_info = @gas_info)
+      def tx_keys(gas_info)
         @cosmos.send_transaction(
           'post',
           "#{@app_service}/keys",
@@ -191,7 +189,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [void]
-      def rename(key, new_key, gas_info = @gas_info)
+      def rename(key, new_key, gas_info)
         validate_string(key, 'key must be a string')
         validate_string(new_key, 'new_key must be a string')
 
@@ -218,7 +216,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [Integer]
-      def tx_count(gas_info = @gas_info)
+      def tx_count(gas_info)
         @cosmos.send_transaction(
           'post',
           "#{@app_service}/count",
@@ -232,7 +230,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [void]
-      def delete_all(gas_info = @gas_info)
+      def delete_all(gas_info)
         @cosmos.send_transaction(
           'post',
           "#{@app_service}/deleteall",
@@ -255,7 +253,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [Array]
-      def tx_key_values(gas_info = @gas_info)
+      def tx_key_values(gas_info)
         @cosmos.send_transaction(
           'post',
           "#{@app_service}/keyvalues",
@@ -268,7 +266,7 @@ module Bluzelle
       #
       # @param [Array]
       # @param [Hash] gas_info Hash containing gas parameters
-      def multi_update(key_values, gas_info = @gas_info)
+      def multi_update(key_values, gas_info)
         validate_array(key_values, 'key_values must be an array')
 
         key_values.each do |key_value|
@@ -303,7 +301,7 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing gas parameters
       #
       # @return [String]
-      def tx_get_lease(key, gas_info = @gas_info)
+      def tx_get_lease(key, gas_info)
         validate_string(key, 'key must be a string')
 
         @cosmos.send_transaction(
@@ -319,7 +317,7 @@ module Bluzelle
       # @param [String] key The key to retrieve the lease information for
       # @param [Hash] gas_info Hash containing gas parameters
       # @param [Hash] lease Minimum time for key to remain in database
-      def renew_lease(key, lease = nil, gas_info = @gas_info)
+      def renew_lease(key, lease, gas_info)
         validate_string(key, 'key must be a string')
 
         lease = Utils.convert_lease(lease)
@@ -338,7 +336,7 @@ module Bluzelle
       #
       # @param [Hash] gas_info Hash containing gas parameters
       # @param [Hash] lease Minimum time for key to remain in database
-      def renew_lease_all(lease = nil, gas_info = @gas_info)
+      def renew_lease_all(lease, gas_info)
         lease = Utils.convert_lease(lease)
 
         validate_lease(lease, 'invalid lease time')
@@ -371,10 +369,8 @@ module Bluzelle
       # @param [Hash] gas_info Hash containing lize(options = {})gas parameters
       #
       # @return [Array]
-      def tx_get_n_shortest_lease(n, gas_info = @gas_info)
+      def tx_get_n_shortest_lease(n, gas_info)
         validate_lease(n, 'invalid value specified')
-
-        # TODO: work on n parameter
 
         @cosmos.send_transaction(
           'post',
