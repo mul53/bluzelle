@@ -23,7 +23,7 @@ module Bluzelle
         @app_service = 'crud'
 
         @cosmos = Cosmos.new(
-          mnemonic: @mnemonic, 
+          mnemonic: @mnemonic,
           endpoint: @endpoint,
           chain_id: @chain_id
         )
@@ -362,6 +362,12 @@ module Bluzelle
 
         @cosmos.query("#{@app_service}/getnshortestleases/#{@uuid}/#{n}")
                .dig('result', 'keyleases')
+               .map do |key_lease|
+          {
+            'key' => key_lease['key'],
+            'lease' => key_lease['lease'].to_i * Constants::BLOCK_TIME_IN_SECONDS
+          }
+        end
       end
 
       # Retrieve a list of the N keys/values in the database with the shortest leases,
@@ -380,6 +386,12 @@ module Bluzelle
           build_params({ N: n.to_s }),
           gas_info
         ).dig('keyleases')
+               .map do |key_lease|
+          {
+            'key' => key_lease['key'],
+            'lease' => key_lease['lease'].to_i * Constants::BLOCK_TIME_IN_SECONDS
+          }
+        end
       end
 
       # Retrieve information about the currently active Bluzelle account
