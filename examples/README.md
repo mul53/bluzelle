@@ -1,5 +1,5 @@
 # Example
-This is an example of how to use the [bluzelle/blzphp](https://github.com/mul53/blzphp) library
+This is an example of how to use blzrb
 
 ## Installation(ubuntu 18.04)
 
