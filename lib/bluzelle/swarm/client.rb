@@ -72,8 +72,6 @@ module Bluzelle
         validate_string(key, 'Key must be a string')
         validate_string(value, 'Value must be a string')
 
-        gas_info = @gas_info if gas_info.nil?
-
         lease = convert_lease(lease_info)
 
         validate_lease(lease, 'invalid lease time')

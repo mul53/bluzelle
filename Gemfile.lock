@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bluzelle (0.1.0)
+    blzrb (0.1.0)
       bip_mnemonic
       bitcoin-ruby
       bitcoin-secp256k1
@@ -94,7 +94,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bluzelle!
+  blzrb!
   pry-rescue
   pry-stack_explorer
   rake (~> 12.0)
