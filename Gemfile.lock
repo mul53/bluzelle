@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    blzrb (0.1.0)
+    blzrb (0.0.2)
       bip_mnemonic
       bitcoin-ruby
       bitcoin-secp256k1
